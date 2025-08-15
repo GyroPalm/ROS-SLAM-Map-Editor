@@ -6,6 +6,8 @@ This repository provides a web-based map editor designed specifically for quick 
 
 The map editor can be thought of as a specialized paint tool, allowing users to effortlessly modify and refine their maps with precision. With this tool, users can add, remove, or modify map features, such as walls, obstacles, and other elements (e.g. furniture changes in a building), to create a more accurate and reliable representation of their environment. This tool helps users achieve what would normally take longer with a 3rd party image editor.
 
+![Screenshot](img/screenshot-main.png)
+
 ## Features
 - [x] Completely Browser-based Self-Hosted Solution (superior privacy)
 - [x] Responsive Map Editing for Touchscreen Devices and Computers
