@@ -10,7 +10,8 @@ The map editor can be thought of as a specialized paint tool, allowing users to 
 - [x] Completely Browser-based Self-Hosted Solution (superior privacy)
 - [x] Responsive Map Editing for Touchscreen Devices and Computers
 - [x] Drag and Drop Map PGM and YAML files
-- [x] Drag and Drop Keepout PGM and YAML (suffix as `_keepout.pgm` and `_keepout.yaml`)
+- [x] Drag and Drop Keepout PGM and YAML files (suffix as `_keepout.pgm` and `_keepout.yaml`)
+- [x] Drag and Drop to Load Both File Sets
 - [x] Uses Font Awesome for sleek UI icons
 - [x] Convenient Zoom In, Zoom Out, and Auto-Fit buttons
 - [x] Invert and Auto-level options
@@ -18,7 +19,7 @@ The map editor can be thought of as a specialized paint tool, allowing users to 
 - [x] Paint or Erase Keep-out zones in your PGM Map
 - [x] Line or Rectangle Tools for Clean Edits
 - [x] Live-Preview Overlay for Brushing or Drawing Lines/Rectangles
-- [x] Multi-level Undo and Redo capabilities
+- [x] Multi-level Undo and Redo Capabilities
 - [x] (Hold Spacebar + Drag Mouse) to Pan the Map
 - [x] Download Separate Map and Keepout Mask (yaml and PGM files)
 
