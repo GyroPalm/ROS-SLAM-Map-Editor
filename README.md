@@ -9,7 +9,8 @@ The map editor can be thought of as a specialized paint tool, allowing users to 
 ## Features
 - [x] Completely Browser-based Self-Hosted Solution (superior privacy)
 - [x] Responsive Map Editing for Touchscreen Devices and Computers
-- [x] Drag and Drop Files Capability
+- [x] Drag and Drop Map PGM and YAML files
+- [x] Drag and Drop Keepout PGM and YAML (suffix as `_keepout.pgm` and `_keepout.yaml`)
 - [x] Uses Font Awesome for sleek UI icons
 - [x] Convenient Zoom In, Zoom Out, and Auto-Fit buttons
 - [x] Invert and Auto-level options
@@ -24,6 +25,8 @@ The map editor can be thought of as a specialized paint tool, allowing users to 
 Future Work:
 
 - [ ] Speed Limit Mask overlay
+- [ ] Polygon Tool
+- [ ] Grid in Meters
 
 ## Usage
 TBD

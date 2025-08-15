@@ -86,6 +86,7 @@
         <input type="file" id="pgmInput" accept=".pgm" class="d-none">
         <button class="btn btn-sm btn-outline-info" id="btnLoadPgm"><i class="fa fa-picture-o"></i> Load PGM</button>
         <span id="pgmName" class="small-note ml-2">No PGM</span>
+		<span id="maskName" class="small-note ml-2">No Keepout</span>
       </div>
 
       <!-- Target (which layer / action) -->
@@ -218,6 +219,13 @@
   let previewing = false;
   let brush = 8;
   let zoom = 1, ZMIN=0.25, ZMAX=8, ZSTEP=1.25;
+  
+  let maskName = 'No Keepout';      // track which mask file is loaded
+  
+  // filename helpers
+  const isYaml = name => /\.ya?ml$/i.test(name);
+  const isPgm  = name => /\.pgm$/i.test(name);
+  const isKeepoutName = name => /_keepout\.(pgm|ya?ml)$/i.test(name) || /keepout/i.test(name);
 
   // Panning
   let isSpace = false, panning = false;
@@ -590,27 +598,58 @@
 
   // ===== Loaders =====
   function handleFiles(fileList){
-    Array.from(fileList).forEach(file=>{
-      if(file.name.endsWith('.yaml') || file.name.endsWith('.yml')){
-        readText(file).then(txt=>{
-          yamlText = txt;
-          yamlObj = jsyaml.load(txt);
-          yamlName = file.name;
-          $yamlName.text(file.name);
-          $('#yamlPreview').text(txt);
-        });
-      }else if(file.name.endsWith('.pgm')){
-        readBinary(file).then(buf=>{
-          pgmName = file.name;
-          pgm = parsePGM(new Uint8Array(buf));
-          $pgmName.text(file.name);
-          if(!mask || (mask.length !== pgm.width*pgm.height)){
-            mask = new Uint8ClampedArray(pgm.width*pgm.height);
-            mask.fill(255);
+    const files = Array.from(fileList);
+    if (files.length === 0) return;
+  
+    // quick index so _keepout.yaml can resolve its image from the same drop
+    const byName = new Map(files.map(f => [f.name, f]));
+  
+    // First pass: YAML files (base or keepout)
+    files.filter(f => isYaml(f.name)).forEach(file=>{
+      readText(file).then(txt=>{
+        try{
+          const yobj = jsyaml.load(txt);
+          // Decide base vs keepout by filename (and fall back to content hint)
+          const isKO = isKeepoutName(file.name);
+          if(isKO){
+            // mask YAML: try to load its image from this batch
+            const imgField = (yobj && yobj.image) ? String(yobj.image) : '';
+            const baseName = imgField.split('/').pop();  // handle relative paths
+            if(baseName && byName.has(baseName)){
+              // load mask image from batch
+              readBinary(byName.get(baseName)).then(buf=>{
+                loadKeepoutPGM(baseName, new Uint8Array(buf));
+              }).catch(err=> alert('Keepout image load error: ' + err.message));
+            }else{
+              // If baseName missing from the drop, just note it—user can drop it later
+              console.warn('Drop the keepout image "'+ baseName +'" to view the mask.');
+            }
+            // Show YAML in preview if you want:
+            // (Optional) $('#yamlPreview').text(txt);
+          }else{
+            // base map YAML
+            yamlText = txt;
+            yamlObj = yobj;
+            yamlName = file.name;
+            $('#yamlPreview').text(txt);
+            $yamlName.text(file.name);
           }
-          setupCanvasFromPGM();
-        }).catch(err=> alert('PGM parse error: ' + err.message));
-      }
+        }catch(e){
+          alert('YAML parse error in ' + file.name + ': ' + e.message);
+        }
+      });
+    });
+  
+    // Second pass: PGM files (base or keepout)
+    files.filter(f => isPgm(f.name)).forEach(file=>{
+      readBinary(file).then(buf=>{
+        const u8 = new Uint8Array(buf);
+        if(isKeepoutName(file.name)){
+          loadKeepoutPGM(file.name, u8);
+        }else{
+          loadBasePGM(file.name, u8);
+        }
+      }).catch(err=> alert('PGM parse error in ' + file.name + ': ' + err.message));
     });
   }
   function readText(file){
@@ -629,12 +668,86 @@
       fr.readAsArrayBuffer(file);
     });
   }
+  
+  function loadBasePGM(filename, u8){
+    try{
+      const parsed = parsePGM(u8);
+      pgmName = filename;
+      pgm = parsed;
+      $pgmName.text(filename);
+  
+      // If mask not allocated or wrong size, reset/resize it to match the map
+      if(!mask || (mask.length !== pgm.width*pgm.height)){
+        mask = new Uint8ClampedArray(pgm.width*pgm.height);
+        mask.fill(255); // no keepout by default
+        maskName = 'No Keepout';
+        $('#maskName').text(maskName);
+      }
+  
+      setupCanvasFromPGM();  // this already redraws and updates dbg
+    }catch(e){
+      alert('Base PGM load error: ' + e.message);
+    }
+  }
+  
+  function loadKeepoutPGM(filename, u8){
+    try{
+      const kpgm = parsePGM(u8);
+  
+      // If we already have a base map, ensure sizes match
+      if(pgm && (kpgm.width !== pgm.width || kpgm.height !== pgm.height)){
+        alert(`Keepout mask size ${kpgm.width}x${kpgm.height} does not match base map ${pgm.width}x${pgm.height}. Skipping.`);
+        return;
+      }
+  
+      // Convert keepout to 0..255 (0=keepout, 255=no keepout)
+      const total = kpgm.width * kpgm.height;
+      const dst = new Uint8ClampedArray(total);
+      const maxv = kpgm.maxval || 255;
+  
+      if(kpgm.pixels.BYTES_PER_ELEMENT === 1 && maxv === 255){
+        // Fast path: already 8-bit
+        dst.set(kpgm.pixels);
+      }else{
+        // Normalize to 8-bit
+        for(let i=0;i<total;i++){
+          dst[i] = Math.round((kpgm.pixels[i] * 255) / maxv);
+        }
+      }
+  
+      mask = dst;
+      maskName = filename;
+      $('#maskName').text(filename);
+  
+      // If base map not loaded yet, we still remember the mask;
+      // once the map loads and canvases size, redraw will display it.
+      if(pgm){
+        // resize display canvases to current zoom if needed (already matched sizes)
+        maskCanvas.width = Math.round(pgm.width * zoom);
+        maskCanvas.height = Math.round(pgm.height * zoom);
+        redrawMask();
+      }
+  
+      // Debug line update (optional)
+      const dbg = $('#dbgInfo').text();
+      if(dbg && dbg.indexOf('Keepout:') === -1){
+        $('#dbgInfo').text(dbg + `; Keepout: ${filename}`);
+      }
+    }catch(e){
+      alert('Keepout PGM load error: ' + e.message);
+    }
+  }
 
   function setupCanvasFromPGM(){
     if(!pgm) return;
     [mapCanvas, maskCanvas, previewCanvas].forEach(cv => { cv.width = Math.round(pgm.width*zoom); cv.height = Math.round(pgm.height*zoom); });
     redrawMap(); redrawMask(); clearPreview(); updateBrushCursorSize();
-    $('#dbgInfo').text(`PGM: ${pgm.width}×${pgm.height}, maxval=${pgm.maxval}, magic=${pgm.magic}; YAML negate=${yamlObj?.negate ?? '(n/a)'}`);
+
+	$('#dbgInfo').text(
+	  `PGM: ${pgm.width}×${pgm.height}, maxval=${pgm.maxval}, magic=${pgm.magic}; `
+	  + `YAML negate=${yamlObj?.negate ?? '(n/a)'}; `
+	  + `Keepout: ${maskName}`
+	);
   }
 
   // ===== Rendering =====
