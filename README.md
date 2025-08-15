@@ -25,7 +25,7 @@ Future Work:
 - [ ] Speed Limit Mask overlay
 
 ## Credit and License
-This tool is created by Dominick Lee as part of GyroPalm's OmniBot V2 AMR product. By making this tool available to the open-source community, the author demonstrates commitment to the principles of collaboration and knowledge-sharing that are at the heart of the open-source community and ROS2 ecosystem. If you are interested in ROS2 gesture-based robotic control, web-based teleoperation, or would like to support the author's work, please feel free to reach out at dlee(@)gyropalm.com
+This tool is created by Dominick Lee as part of GyroPalm's OmniBot V2 AMR product. By making this tool available to the open-source community, the author demonstrates commitment to the principles of collaboration and knowledge-sharing that are at the heart of the open-source community and ROS2 ecosystem. If you are interested in ROS2 gesture-based robotic control, collaboration based on ROS2 robots, or would like to support the author's work, please feel free to reach out at dlee(@)gyropalm.com
 
 If you choose to use this tool in your work or research, please refer to the MIT license file provided. Please cite the work as follows:
 > Lee, Dominick. (2025). ROS SLAM Map Editor [Computer software]. GyroPalm, LLC. https://github.com/GyroPalm/ROS-SLAM-Map-Editor
