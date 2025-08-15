@@ -633,6 +633,7 @@
             yamlName = file.name;
             $('#yamlPreview').text(txt);
             $yamlName.text(file.name);
+			updateDebug();
           }
         }catch(e){
           alert('YAML parse error in ' + file.name + ': ' + e.message);
@@ -728,11 +729,8 @@
         redrawMask();
       }
   
-      // Debug line update (optional)
-      const dbg = $('#dbgInfo').text();
-      if(dbg && dbg.indexOf('Keepout:') === -1){
-        $('#dbgInfo').text(dbg + `; Keepout: ${filename}`);
-      }
+      // Debug line update
+      updateDebug(); 
     }catch(e){
       alert('Keepout PGM load error: ' + e.message);
     }
@@ -743,11 +741,20 @@
     [mapCanvas, maskCanvas, previewCanvas].forEach(cv => { cv.width = Math.round(pgm.width*zoom); cv.height = Math.round(pgm.height*zoom); });
     redrawMap(); redrawMask(); clearPreview(); updateBrushCursorSize();
 
-	$('#dbgInfo').text(
-	  `PGM: ${pgm.width}×${pgm.height}, maxval=${pgm.maxval}, magic=${pgm.magic}; `
-	  + `YAML negate=${yamlObj?.negate ?? '(n/a)'}; `
-	  + `Keepout: ${maskName}`
-	);
+	updateDebug();
+  }
+  
+  function updateDebug(){
+    if(!pgm){
+      $('#dbgInfo').text('—');
+      return;
+    }
+    const keep = (typeof maskName === 'string' && maskName) ? maskName : 'No Keepout';
+    const neg = (yamlObj && yamlObj.negate != null) ? yamlObj.negate : '(n/a)';
+    $('#dbgInfo').text(
+      `PGM: ${pgm.width}×${pgm.height}, maxval=${pgm.maxval}, magic=${pgm.magic}; ` +
+      `YAML negate=${neg}; Keepout: ${keep}`
+    );
   }
 
   // ===== Rendering =====
