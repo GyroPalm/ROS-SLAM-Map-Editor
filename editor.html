@@ -156,7 +156,7 @@
       </div>
 
       <div class="col small-note ml-auto text-right pb-2">
-        Tip: Choose a target (Paint/Erase/Keep-Out), then a shape (Freehand/Line/Rect). Spacebar+Drag to pan.
+        Tip: Choose a target (Paint/Erase/Keep-Out), then a shape (Freehand/Line/Rect). Spacebar+Drag to pan. Shift+Scroll to zoom.
       </div>
     </div>
   </div>
@@ -359,6 +359,45 @@
     redrawMap(); redrawMask(); clearPreview();
     updateBrushCursorSize();
   }
+  
+  // ===== Canvas focused zoom helper using Shift+Scroll =====
+  function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
+  
+    // Zoom keeping the cursor position anchored
+  function zoomAtClient(clientX, clientY, factor){
+    if(!pgm) return;
+  
+    const vpRect = viewport.getBoundingClientRect();
+    const vx = clientX - vpRect.left;   // cursor relative to viewport
+    const vy = clientY - vpRect.top;
+  
+    // Canvas coords under cursor BEFORE zoom
+    const cxBefore = viewport.scrollLeft + vx;
+    const cyBefore = viewport.scrollTop  + vy;
+    const mx = cxBefore / zoom; // map pixels under cursor
+    const my = cyBefore / zoom;
+  
+    // Apply zoom
+    const newZoom = clamp(zoom * factor, ZMIN, ZMAX);
+    if(newZoom === zoom) return;
+    setZoom(newZoom);
+  
+    // AFTER zoom, compute needed scroll so that (mx,my) stays under cursor
+    const cxAfter = mx * zoom;
+    const cyAfter = my * zoom;
+    viewport.scrollLeft = Math.round(cxAfter - vx);
+    viewport.scrollTop  = Math.round(cyAfter - vy);
+  }
+
+  viewport.addEventListener('wheel', (e)=>{
+    if(!pgm) return;
+    if(e.shiftKey){
+      e.preventDefault(); // avoid page scroll
+      const factor = (e.deltaY < 0) ? ZSTEP : (1 / ZSTEP);
+      zoomAtClient(e.clientX, e.clientY, factor);
+    }
+  }, {passive:false});
+
 
   // ===== Coordinate transforms (canvas pixel -> map pixel) =====
   function canvasToMap(cx, cy){ return [Math.floor(cx/zoom), Math.floor(cy/zoom)]; }

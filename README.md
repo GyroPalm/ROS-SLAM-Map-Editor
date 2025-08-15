@@ -21,8 +21,9 @@ The map editor can be thought of as a specialized paint tool, allowing users to 
 - [x] Line or Rectangle Tools for Clean Edits
 - [x] Live-Preview Overlay for Brushing or Drawing Lines/Rectangles
 - [x] Multi-level Undo and Redo Capabilities
-- [x] (Hold Spacebar + Drag Mouse) to Pan the Map
 - [x] Option to Draw Filled Rectangles
+- [x] (Hold Spacebar + Drag Mouse) to Pan the Map
+- [x] (Hold Shift + Scroll) to Zoom to Cursor
 - [x] Drag to Take Measurements Dynamically from a Map
 - [x] Download Separate Map and Keepout Mask (yaml and PGM files)
 
