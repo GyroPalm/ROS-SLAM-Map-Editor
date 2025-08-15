@@ -15,19 +15,22 @@
     .dropzone.drag{background:#222; color:#fff; border-color:#888}
     .small-note{font-size:12px; color:#aaa}
     .spacer{height:12px}
-    .tool-btn.active{outline:2px solid #17a2b8}
+    .tool-btn.active,.shape-btn.active{outline:2px solid #17a2b8}
 
     /* Viewport that can scroll/pan when the map is larger than the screen */
     #viewport{
       position: relative;
       width: 100%;
-      height: calc(100vh - 150px); /* JS updates this precisely on load/resize */
+      height: calc(100vh - 150px); /* JS refines on load/resize */
       overflow: auto;
       border: 1px solid #333;
       background: #000;
+      cursor: default;
     }
+    #viewport.panning{ cursor: grab; }
+    #viewport.panning.dragging{ cursor: grabbing; }
 
-    /* The canvas stack (actual drawing surfaces) */
+    /* The canvas stack */
     #canvasWrap{ position:relative; display:inline-block; }
 
     /* Base map canvas gets the checkerboard */
@@ -36,24 +39,29 @@
       border:1px solid #444;
       background: conic-gradient(#222 0 25%, #111 0 50%, #222 0 75%, #111 0 100%) 0 0/16px 16px;
     }
-
-    /* Mask overlay is fully transparent except where we paint */
+    /* Mask overlay is transparent except where painted */
     #maskCanvas{
       image-rendering: pixelated; image-rendering: crisp-edges;
       border:1px solid #444;
       background: transparent !important;
       position:absolute; left:0; top:0; z-index:2;
-      pointer-events: none; /* clicks go to mapCanvas */
+      pointer-events: none;
     }
-
-    /* Brush cursor: hollow gray circle that follows the pointer */
+    /* Preview overlay for line/rect ghosting */
+    #previewCanvas{
+      image-rendering: pixelated; image-rendering: crisp-edges;
+      position:absolute; left:0; top:0; z-index:3;
+      pointer-events: none;
+      background: transparent !important;
+    }
+    /* Brush cursor */
     #brushCursor{
       position: absolute;
       pointer-events: none;
       border: 1px solid rgba(200,200,200,0.9);
       border-radius: 50%;
       box-sizing: border-box;
-      z-index: 3;
+      z-index: 4;
       display: none;
     }
   </style>
@@ -73,12 +81,21 @@
         <span id="pgmName" class="small-note ml-2">No PGM</span>
       </div>
 
-      <!-- Tools -->
+      <!-- Target (which layer / action) -->
       <div class="col-auto">
         <div class="btn-group btn-group-sm" role="group" aria-label="Tools">
           <button class="btn btn-outline-light tool-btn" data-tool="paint" title="Paint walls (occupied)"><i class="fa fa-paint-brush"></i> Paint</button>
           <button class="btn btn-outline-light tool-btn" data-tool="erase" title="Erase map + keepout"><i class="fa fa-eraser"></i> Erase</button>
           <button class="btn btn-outline-light tool-btn" data-tool="mask" title="Draw keep-out mask"><i class="fa fa-ban"></i> Keep-Out</button>
+        </div>
+      </div>
+
+      <!-- Shape -->
+      <div class="col-auto">
+        <div class="btn-group btn-group-sm" role="group" aria-label="Shape">
+          <button class="btn btn-outline-light shape-btn" data-shape="freehand" title="Freehand"><i class="fa fa-pencil"></i></button>
+          <button class="btn btn-outline-light shape-btn" data-shape="line" title="Line"><i class="fa fa-minus"></i></button>
+          <button class="btn btn-outline-light shape-btn" data-shape="rect" title="Rectangle"><i class="fa fa-square-o"></i></button>
         </div>
       </div>
 
@@ -105,14 +122,17 @@
         </div>
       </div>
 
-      <!-- Zoom / Undo / Downloads -->
+      <!-- Zoom / Undo-Redo / Downloads -->
       <div class="col-auto">
         <div class="btn-group btn-group-sm" role="group" aria-label="Zoom">
           <button class="btn btn-outline-light" id="zoomOut" title="Zoom Out (−)"><i class="fa fa-search-minus"></i></button>
           <button class="btn btn-outline-light" id="zoomIn" title="Zoom In (+)"><i class="fa fa-search-plus"></i></button>
           <button class="btn btn-outline-light" id="zoomReset" title="Reset Zoom"><i class="fa fa-compress"></i></button>
         </div>
-        <button class="btn btn-sm btn-outline-warning ml-2" id="btnUndo" title="Undo"><i class="fa fa-undo"></i> Undo</button>
+        <div class="btn-group btn-group-sm ml-2" role="group">
+          <button class="btn btn-outline-warning" id="btnUndo" title="Undo (Ctrl+Z)"><i class="fa fa-undo"></i></button>
+          <button class="btn btn-outline-warning" id="btnRedo" title="Redo (Ctrl+Y / Shift+Z)"><i class="fa fa-repeat"></i></button>
+        </div>
       </div>
 
       <div class="col-auto">
@@ -121,7 +141,7 @@
       </div>
 
       <div class="col small-note ml-auto text-right">
-        Tip: black = occupied walls; white = free space. Keep-out mask overlays are exported separately.
+        Tip: choose a target (Paint/Erase/Keep-Out), then a shape (Freehand/Line/Rect). Spacebar+drag to pan.
       </div>
     </div>
   </div>
@@ -153,7 +173,7 @@
         <div class="card-body p-2">
           <div class="small-note">Legend</div>
           <div class="small-note"><i class="fa fa-paint-brush"></i> Paint: sets map pixels to <code>0</code> (occupied/black)</div>
-          <div class="small-note"><i class="fa fa-eraser"></i> Erase: sets map to <code>maxval</code> (free) and mask to <code>255</code></div>
+          <div class="small-note"><i class="fa fa-eraser"></i> Erase: map→<code>maxval</code> (free), mask→<code>255</code> (no-keepout)</div>
           <div class="small-note"><i class="fa fa-ban"></i> Keep-Out: draws black on mask (keepout)</div>
         </div>
       </div>
@@ -165,6 +185,7 @@
           <div class="overlay-label">Map</div>
           <canvas id="mapCanvas"></canvas>
           <canvas id="maskCanvas"></canvas>
+          <canvas id="previewCanvas"></canvas>
           <div id="brushCursor"></div>
         </div>
       </div>
@@ -182,35 +203,53 @@
   // ===== State =====
   let yamlObj = null, yamlText = '', yamlName = 'map.yaml';
   let pgm = null, pgmName = 'map.pgm';
-  let mask = null; // Uint8ClampedArray (0=keepout black, 255=no keepout)
-  let tool = 'paint';
-  let drawing = false;
-  let brush = 8;
-  let zoom = 1;        // visual zoom (does not affect saved files)
-  const ZMIN=0.25, ZMAX=8, ZSTEP=1.25;
+  let mask = null; // Uint8ClampedArray (0=keepout, 255=no keepout)
 
-  // Undo stack (each item is an array of {layer:'pgm'|'mask', idx, prev, next})
-  const undoStack = [];
-  let currentStroke = null;          // collects changes for one drag
-  let touchedIndices = null;         // Set to record first-touch per stroke (sparse)
+  let tool = 'paint';               // target: 'paint' | 'erase' | 'mask'
+  let shape = 'freehand';           // 'freehand' | 'line' | 'rect'
+  let drawing = false;
+  let previewing = false;
+  let brush = 8;
+  let zoom = 1, ZMIN=0.25, ZMAX=8, ZSTEP=1.25;
+
+  // Panning
+  let isSpace = false, panning = false;
+  let panStartX=0, panStartY=0, panStartScrollL=0, panStartScrollT=0;
+
+  // Undo/Redo stacks
+  const undoStack = [];  // each: [{layer, idx, prev, next}, ...]
+  const redoStack = [];
+  let currentStroke = null;
+  let touchedIndices = null;
+
+  // Shape start point (canvas coords)
+  let sx=0, sy=0;
 
   // ===== Elements =====
   const $yamlName = $('#yamlName'), $pgmName = $('#pgmName');
   const mapCanvas = document.getElementById('mapCanvas');
   const maskCanvas = document.getElementById('maskCanvas');
+  const previewCanvas = document.getElementById('previewCanvas');
   const mapCtx = mapCanvas.getContext('2d');
   const maskCtx = maskCanvas.getContext('2d');
+  const prevCtx = previewCanvas.getContext('2d');
   const brushCursor = document.getElementById('brushCursor');
   const viewport = document.getElementById('viewport');
   const canvasWrap = document.getElementById('canvasWrap');
 
   // ===== UI Handlers =====
   $('.tool-btn').on('click', function(){
-    $('.tool-btn').removeClass('active');
-    $(this).addClass('active');
+    $('.tool-btn').removeClass('active'); $(this).addClass('active');
     tool = $(this).data('tool');
   });
   $('.tool-btn[data-tool="paint"]').addClass('active');
+
+  $('.shape-btn').on('click', function(){
+    $('.shape-btn').removeClass('active'); $(this).addClass('active');
+    shape = $(this).data('shape');
+    clearPreview();
+  });
+  $('.shape-btn[data-shape="freehand"]').addClass('active');
 
   $('#brushSize').on('input change', function(){
     brush = parseInt(this.value,10);
@@ -234,16 +273,25 @@
   $('#zoomOut').on('click', ()=> setZoom(Math.max(ZMIN, zoom/ZSTEP)));
   $('#zoomReset').on('click', ()=> setZoom(1));
 
-  // Undo
+  // Undo/Redo
   $('#btnUndo').on('click', undo);
+  $('#btnRedo').on('click', redo);
 
-  // Keyboard shortcuts: +/-, 0, z
+  // Keyboard shortcuts
   window.addEventListener('keydown', (e)=>{
     if(e.target && /input|textarea|select/i.test(e.target.tagName)) return;
-    if(e.key === '+' || e.key === '='){ setZoom(Math.min(ZMAX, zoom*ZSTEP)); }
+
+    if(e.code === 'Space'){
+      if(!isSpace){ e.preventDefault(); isSpace = true; viewport.classList.add('panning'); }
+    } else if(e.key === '+' || e.key === '='){ setZoom(Math.min(ZMAX, zoom*ZSTEP)); }
     else if(e.key === '-' || e.key === '_'){ setZoom(Math.max(ZMIN, zoom/ZSTEP)); }
     else if(e.key === '0'){ setZoom(1); }
-    else if(e.key.toLowerCase() === 'z'){ undo(); }
+    else if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z'){ e.preventDefault(); undo(); }
+    else if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y'){ e.preventDefault(); redo(); }
+    else if(e.shiftKey && e.key.toLowerCase() === 'z'){ e.preventDefault(); redo(); }
+  });
+  window.addEventListener('keyup', (e)=>{
+    if(e.code === 'Space'){ isSpace = false; viewport.classList.remove('panning'); viewport.classList.remove('dragging'); }
   });
 
   // Resize viewport height precisely relative to toolbar
@@ -271,11 +319,8 @@
     zoom = z;
     const w = Math.round(pgm.width * zoom);
     const h = Math.round(pgm.height * zoom);
-    // Set display size (canvas pixels) to scaled dims; redraw contents scaled
-    mapCanvas.width = w;  mapCanvas.height = h;
-    maskCanvas.width = w; maskCanvas.height = h;
-    redrawMap();
-    redrawMask();
+    [mapCanvas, maskCanvas, previewCanvas].forEach(cv => { cv.width = w; cv.height = h; });
+    redrawMap(); redrawMask(); clearPreview();
     updateBrushCursorSize();
   }
 
@@ -290,100 +335,156 @@
   }
   function moveBrushCursor(evt){
     const rect = mapCanvas.getBoundingClientRect();
-    const x = (evt.clientX ?? (evt.touches && evt.touches[0].clientX)) - rect.left;
-    const y = (evt.clientY ?? (evt.touches && evt.touches[0].clientY)) - rect.top;
+    const client = evt.touches ? evt.touches[0] : evt;
+    const x = client.clientX - rect.left;
+    const y = client.clientY - rect.top;
     const d = Math.max(1, Math.round(brush * zoom));
     brushCursor.style.left = Math.round(x - d/2) + 'px';
     brushCursor.style.top  = Math.round(y - d/2) + 'px';
   }
-
-  // Show/hide on pointer enter/leave
   mapCanvas.addEventListener('mouseenter', ()=> { brushCursor.style.display = 'block'; updateBrushCursorSize(); });
   mapCanvas.addEventListener('mouseleave', ()=> { brushCursor.style.display = 'none'; });
 
-  // ===== Mouse drawing =====
-  mapCanvas.addEventListener('mousedown', e => {
-    if(!pgm) return;
-    drawing = true;
-    beginStroke();
-    paintAt(e.offsetX, e.offsetY);
+  // ===== Panning with spacebar + drag =====
+  mapCanvas.addEventListener('mousedown', e=>{
+    if(isSpace){
+      panning = true;
+      viewport.classList.add('dragging');
+      panStartX = e.clientX; panStartY = e.clientY;
+      panStartScrollL = viewport.scrollLeft; panStartScrollT = viewport.scrollTop;
+    } else {
+      startDrawing(e.offsetX, e.offsetY);
+    }
   });
-  mapCanvas.addEventListener('mousemove', e => {
+  mapCanvas.addEventListener('mousemove', e=>{
     moveBrushCursor(e);
-    if(drawing) paintAt(e.offsetX, e.offsetY);
+    if(panning){
+      viewport.scrollLeft = panStartScrollL - (e.clientX - panStartX);
+      viewport.scrollTop  = panStartScrollT  - (e.clientY - panStartY);
+    } else if(drawing && shape==='freehand'){
+      paintAt(e.offsetX, e.offsetY);
+    } else if(previewing && (shape==='line' || shape==='rect')){
+      drawPreview(sx, sy, e.offsetX, e.offsetY);
+    }
   });
-  window.addEventListener('mouseup', ()=> endStroke());
+  window.addEventListener('mouseup', e=>{
+    if(panning){ panning=false; viewport.classList.remove('dragging'); }
+    endDrawing(e);
+  });
 
-  // ===== Touch drawing (phones/tablets) =====
-  mapCanvas.addEventListener('touchstart', e => {
+  // Touch (no spacebar on mobile — pan via viewport scroll as usual)
+  mapCanvas.addEventListener('touchstart', e=>{
     if(!pgm) return;
     e.preventDefault();
-    drawing = true;
-    beginStroke();
-    const t = e.touches[0];
-    const rect = mapCanvas.getBoundingClientRect();
+    const t = e.touches[0], rect = mapCanvas.getBoundingClientRect();
     const x = t.clientX - rect.left, y = t.clientY - rect.top;
     moveBrushCursor(e);
-    paintAt(x, y);
+    startDrawing(x, y);
   }, {passive:false});
-
-  mapCanvas.addEventListener('touchmove', e => {
+  mapCanvas.addEventListener('touchmove', e=>{
     if(!pgm) return;
     e.preventDefault();
-    const t = e.touches[0];
-    const rect = mapCanvas.getBoundingClientRect();
+    const t = e.touches[0], rect = mapCanvas.getBoundingClientRect();
     const x = t.clientX - rect.left, y = t.clientY - rect.top;
     moveBrushCursor(e);
-    if(drawing) paintAt(x, y);
+    if(drawing && shape==='freehand'){ paintAt(x, y); }
+    else if(previewing && (shape==='line' || shape==='rect')){ drawPreview(sx, sy, x, y); }
   }, {passive:false});
+  mapCanvas.addEventListener('touchend', e=>{ e.preventDefault(); endDrawing(); }, {passive:false});
+  mapCanvas.addEventListener('touchcancel', e=>{ e.preventDefault(); endDrawing(); }, {passive:false});
 
-  mapCanvas.addEventListener('touchend', e => { e.preventDefault(); endStroke(); }, {passive:false});
-  mapCanvas.addEventListener('touchcancel', e => { e.preventDefault(); endStroke(); }, {passive:false});
-
-  function beginStroke(){
-    currentStroke = [];
-    touchedIndices = new Set();
+  // ===== Drawing lifecycle =====
+  function startDrawing(cx, cy){
+    if(!pgm) return;
+    if(shape === 'freehand'){
+      drawing = true;
+      beginStroke();
+      paintAt(cx, cy);
+    } else {
+      // line / rect: start preview
+      previewing = true;
+      sx = cx; sy = cy;
+      clearPreview();
+      drawPreview(sx, sy, cx, cy); // tiny marker
+    }
   }
-  function endStroke(){
-    if(!drawing) return;
-    drawing = false;
+  function endDrawing(e){
+    if(shape==='freehand'){
+      if(!drawing) return;
+      drawing = false;
+      finishStroke();
+    } else if(previewing){
+      previewing = false;
+      // commit line/rect
+      const rect = mapCanvas.getBoundingClientRect();
+      let ex, ey;
+      if(e && typeof e.clientX === 'number'){
+        ex = e.clientX - rect.left; ey = e.clientY - rect.top;
+      } else {
+        // if touchend or mouseup without coordinates, keep last previewed pos
+        ex = lastPreviewX ?? sx; ey = lastPreviewY ?? sy;
+      }
+      clearPreview();
+      beginStroke();
+      if(shape === 'line') drawThickLine(sx, sy, ex, ey);
+      else if(shape === 'rect') drawThickRect(sx, sy, ex, ey);
+      finishStroke();
+    }
+  }
+
+  function beginStroke(){ currentStroke = []; touchedIndices = new Set(); }
+  function finishStroke(){
     if(currentStroke && currentStroke.length){
       undoStack.push(currentStroke);
-      if(undoStack.length > 50) undoStack.shift();
+      if(undoStack.length > 100) undoStack.shift();
+      // new action invalidates redo history
+      redoStack.length = 0;
     }
-    currentStroke = null;
-    touchedIndices = null;
+    currentStroke = null; touchedIndices = null;
   }
+
   function undo(){
     const changeSet = undoStack.pop();
     if(!changeSet) return;
+    // To build a redo set, we need the inverse (swap prev/next)
+    const redoSet = [];
     for(const ch of changeSet){
-      if(ch.layer === 'pgm') pgm.pixels[ch.idx] = ch.prev;
-      else if(ch.layer === 'mask') mask[ch.idx] = ch.prev;
+      const buf = (ch.layer === 'pgm') ? pgm.pixels : mask;
+      redoSet.push({layer: ch.layer, idx: ch.idx, prev: buf[ch.idx], next: ch.prev});
+      buf[ch.idx] = ch.prev;
     }
+    redoStack.push(redoSet);
+    redrawMap(); redrawMask();
+  }
+  function redo(){
+    const changeSet = redoStack.pop();
+    if(!changeSet) return;
+    const undoSet = [];
+    for(const ch of changeSet){
+      const buf = (ch.layer === 'pgm') ? pgm.pixels : mask;
+      undoSet.push({layer: ch.layer, idx: ch.idx, prev: buf[ch.idx], next: ch.next});
+      buf[ch.idx] = ch.next;
+    }
+    undoStack.push(undoSet);
     redrawMap(); redrawMask();
   }
 
-  // ===== Painting =====
+  // ===== Painting primitives =====
   function paintAt(cx, cy){
     if(!pgm) return;
     const [mx,my] = canvasToMap(cx, cy);
     const rad = Math.max(1, Math.floor(brush/2));
     const w = pgm.width, h = pgm.height, maxval = pgm.maxval;
 
-    // Route by tool:
     if(tool === 'mask'){
-      // Draw keep-out (black) on mask
-      paintBuffer('mask', mask, w, h, mx, my, rad, /*value*/0);
+      paintBuffer('mask', mask, w, h, mx, my, rad, 0);
       redrawMask();
     } else if(tool === 'paint'){
-      // Draw occupied (black) on map layer only
-      paintBuffer('pgm', pgm.pixels, w, h, mx, my, rad, /*value*/0);
+      paintBuffer('pgm', pgm.pixels, w, h, mx, my, rad, 0);
       redrawMap();
     } else if(tool === 'erase'){
-      // Erase BOTH layers: map->free (maxval), mask->no keepout (255)
-      paintBuffer('pgm', pgm.pixels, w, h, mx, my, rad, /*value*/maxval);
-      paintBuffer('mask', mask, w, h, mx, my, rad, /*value*/255);
+      paintBuffer('pgm', pgm.pixels, w, h, mx, my, rad, maxval);
+      paintBuffer('mask', mask, w, h, mx, my, rad, 255);
       redrawMap(); redrawMask();
     }
   }
@@ -397,7 +498,6 @@
         if(dx*dx + dy*dy <= rad*rad){
           const idx = y*w + x;
           if(touchedIndices && !touchedIndices.has(idx)){
-            // record original value once per stroke
             currentStroke && currentStroke.push({layer: layerName, idx, prev: buf[idx], next: value});
             touchedIndices && touchedIndices.add(idx);
           }
@@ -405,6 +505,67 @@
         }
       }
     }
+  }
+
+  function drawThickLine(cx1, cy1, cx2, cy2){
+    // Map coords
+    let [x0,y0] = canvasToMap(cx1, cy1);
+    let [x1,y1] = canvasToMap(cx2, cy2);
+    const dx = Math.abs(x1 - x0), dy = Math.abs(y1 - y0);
+    const sx = x0 < x1 ? 1 : -1;
+    const sy = y0 < y1 ? 1 : -1;
+    let err = dx - dy;
+
+    const w = pgm.width, h = pgm.height, maxval = pgm.maxval;
+    const rad = Math.max(1, Math.floor(brush/2));
+    const drawPoint = (mx,my)=>{
+      if(tool==='paint')      paintBuffer('pgm', pgm.pixels, w,h, mx,my, rad, 0);
+      else if(tool==='mask')  paintBuffer('mask', mask,       w,h, mx,my, rad, 0);
+      else if(tool==='erase'){paintBuffer('pgm', pgm.pixels,  w,h, mx,my, rad, maxval);
+                               paintBuffer('mask', mask,      w,h, mx,my, rad, 255);}
+    };
+    while(true){
+      drawPoint(x0,y0);
+      if(x0 === x1 && y0 === y1) break;
+      const e2 = 2*err;
+      if(e2 > -dy){ err -= dy; x0 += sx; }
+      if(e2 <  dx){ err += dx; y0 += sy; }
+    }
+    redrawMap(); redrawMask();
+  }
+
+  function drawThickRect(cx1, cy1, cx2, cy2){
+    // Normalize corners
+    const x1 = Math.min(cx1, cx2), y1 = Math.min(cy1, cy2);
+    const x2 = Math.max(cx1, cx2), y2 = Math.max(cy1, cy2);
+    // Four edges
+    drawThickLine(x1, y1, x2, y1); // top
+    drawThickLine(x2, y1, x2, y2); // right
+    drawThickLine(x2, y2, x1, y2); // bottom
+    drawThickLine(x1, y2, x1, y1); // left
+  }
+
+  // ===== Preview overlay =====
+  let lastPreviewX=null, lastPreviewY=null;
+  function clearPreview(){ prevCtx.clearRect(0,0,previewCanvas.width, previewCanvas.height); lastPreviewX=lastPreviewY=null; }
+  function drawPreview(cx1, cy1, cx2, cy2){
+    clearPreview();
+    lastPreviewX=cx2; lastPreviewY=cy2;
+    prevCtx.save();
+    // color hints per target
+    if(tool==='mask'){ prevCtx.strokeStyle='rgba(255,0,0,0.7)'; }
+    else if(tool==='erase'){ prevCtx.strokeStyle='rgba(255,255,255,0.8)'; }
+    else { prevCtx.strokeStyle='rgba(0,0,0,0.8)'; }
+    prevCtx.lineWidth = Math.max(1, Math.round(brush * zoom));
+    prevCtx.lineCap = 'round';
+    if(shape==='line'){
+      prevCtx.beginPath(); prevCtx.moveTo(cx1, cy1); prevCtx.lineTo(cx2, cy2); prevCtx.stroke();
+    }else if(shape==='rect'){
+      const x = Math.min(cx1,cx2), y = Math.min(cy1,cy2);
+      const w = Math.abs(cx2-cx1), h = Math.abs(cy2-cy1);
+      prevCtx.strokeRect(x, y, w, h);
+    }
+    prevCtx.restore();
   }
 
   // ===== Loaders =====
@@ -417,7 +578,6 @@
           yamlName = file.name;
           $yamlName.text(file.name);
           $('#yamlPreview').text(txt);
-          maybeReady();
         });
       }else if(file.name.endsWith('.pgm')){
         readBinary(file).then(buf=>{
@@ -426,14 +586,13 @@
           $pgmName.text(file.name);
           if(!mask || (mask.length !== pgm.width*pgm.height)){
             mask = new Uint8ClampedArray(pgm.width*pgm.height);
-            mask.fill(255); // default: no keepout
+            mask.fill(255);
           }
           setupCanvasFromPGM();
         }).catch(err=> alert('PGM parse error: ' + err.message));
       }
     });
   }
-
   function readText(file){
     return new Promise((res,rej)=>{
       const fr = new FileReader();
@@ -451,20 +610,10 @@
     });
   }
 
-  function maybeReady(){
-    // placeholder if you want to validate yaml vs pgm dims, etc.
-  }
-
   function setupCanvasFromPGM(){
     if(!pgm) return;
-    // Start at 1:1; user can zoom with controls
-    mapCanvas.width = Math.round(pgm.width * zoom);
-    mapCanvas.height = Math.round(pgm.height * zoom);
-    maskCanvas.width = mapCanvas.width;
-    maskCanvas.height = mapCanvas.height;
-    redrawMap();
-    redrawMask();
-    updateBrushCursorSize();
+    [mapCanvas, maskCanvas, previewCanvas].forEach(cv => { cv.width = Math.round(pgm.width*zoom); cv.height = Math.round(pgm.height*zoom); });
+    redrawMap(); redrawMask(); clearPreview(); updateBrushCursorSize();
     $('#dbgInfo').text(`PGM: ${pgm.width}×${pgm.height}, maxval=${pgm.maxval}, magic=${pgm.magic}; YAML negate=${yamlObj?.negate ?? '(n/a)'}`);
   }
 
@@ -474,16 +623,11 @@
     const {width:w, height:h, pixels, maxval} = pgm;
     if(!w || !h || !maxval) return;
 
-    // Auto-levels
     let pmin = 65535, pmax = 0;
     if($('#autoLevels').prop('checked')){
-      for(let i=0;i<w*h;i++){
-        const v = pixels[i];
-        if(v < pmin) pmin = v;
-        if(v > pmax) pmax = v;
-      }
-      if(pmax === pmin){ pmin = 0; pmax = maxval; }
-    } else { pmin = 0; pmax = maxval; }
+      for(let i=0;i<w*h;i++){ const v=pixels[i]; if(v<pmin) pmin=v; if(v>pmax) pmax=v; }
+      if(pmax === pmin){ pmin=0; pmax=maxval; }
+    } else { pmin=0; pmax=maxval; }
 
     const inv = $('#invertDisplay').prop('checked') || (yamlObj && Number(yamlObj.negate) === 1);
     const img = mapCtx.createImageData(w, h);
@@ -491,14 +635,10 @@
 
     for(let i=0;i<w*h;i++){
       let g = Math.round((pixels[i] - pmin) * sc);
-      if(g < 0) g = 0; else if(g > 255) g = 255;
+      if(g<0) g=0; else if(g>255) g=255;
       if(inv) g = 255 - g;
-      img.data[4*i+0] = g;
-      img.data[4*i+1] = g;
-      img.data[4*i+2] = g;
-      img.data[4*i+3] = 255;
+      img.data[4*i+0] = g; img.data[4*i+1] = g; img.data[4*i+2] = g; img.data[4*i+3] = 255;
     }
-    // draw scaled to canvas size
     const tmp = document.createElement('canvas');
     tmp.width = w; tmp.height = h;
     tmp.getContext('2d').putImageData(img,0,0);
@@ -513,7 +653,7 @@
     const img = maskCtx.createImageData(w, h);
     for(let i=0;i<w*h;i++){
       const m = mask[i];      // 0..255
-      const isKO = (m <= 20); // near-black = keepout
+      const isKO = (m <= 20);
       img.data[4*i+0] = isKO ? 255 : 0;
       img.data[4*i+1] = 0;
       img.data[4*i+2] = 0;
@@ -531,22 +671,19 @@
   function parsePGM(uint8){
     const textHead = new TextDecoder().decode(uint8.slice(0, 1024));
     const magic = textHead.slice(0,2);
-    if(magic !== 'P5' && magic !== 'P2') throw new Error('Unsupported PGM magic (need P5 or P2)');
+    if(magic !== 'P5' && magic !== 'P2') throw new Error('Unsupported PGM magic');
 
     function* tokens(bytes){
       let s = '';
       for(let i=0;i<bytes.length;i++){
         const c = String.fromCharCode(bytes[i]);
         if(c==='#'){ while(i<bytes.length && String.fromCharCode(bytes[i])!=='\n') i++; continue; }
-        if(/\s/.test(c)){ if(s.length){ yield s; s=''; } }
-        else s+=c;
+        if(/\s/.test(c)){ if(s.length){ yield s; s=''; } } else s+=c;
         if(s.length>256) throw new Error('Header token too long');
-      }
-      if(s.length) yield s;
+      } if(s.length) yield s;
     }
     const it = tokens(uint8);
-    const mg = it.next().value;
-    if(mg !== magic) throw new Error('Malformed header');
+    const mg = it.next().value; if(mg !== magic) throw new Error('Malformed header');
     const w = parseInt(it.next().value,10);
     const h = parseInt(it.next().value,10);
     const maxv = parseInt(it.next().value,10);
@@ -563,7 +700,7 @@
       for(let i=0;i<w*h;i++) pixels[i] = Math.min(maxv, parseInt(nums[i],10));
       return {magic, width:w, height:h, maxval:maxv, pixels};
     }else{
-      // find dataStart after maxval
+      // After maxval, first non-ws is raster
       let nums=0, i=2, inTok=false;
       while(i < uint8.length && nums < 3){
         const c = uint8[i];
@@ -579,13 +716,9 @@
       const bytesPer = (maxv>255)?2:1;
       const needed = w*h*bytesPer;
       if(dataStart + needed > uint8.length) throw new Error('P5 data too short');
-      if(bytesPer===1){
-        pixels.set(uint8.slice(dataStart, dataStart+needed));
-      }else{
-        let p=0;
-        for(let k=0;k<needed;k+=2){
-          pixels[p++] = (uint8[dataStart+k]<<8) | uint8[dataStart+k+1];
-        }
+      if(bytesPer===1){ pixels.set(uint8.slice(dataStart, dataStart+needed)); }
+      else{
+        let p=0; for(let k=0;k<needed;k+=2){ pixels[p++] = (uint8[dataStart+k]<<8) | uint8[dataStart+k+1]; }
       }
       return {magic, width:w, height:h, maxval:maxv, pixels};
     }
@@ -598,15 +731,9 @@
     const hbytes = enc.encode(header);
     const bytesPer = (maxval>255)?2:1;
     const body = new Uint8Array(w*h*bytesPer);
-    if(bytesPer===1){
-      for(let i=0;i<w*h;i++) body[i] = Math.min(255, pixels[i]);
-    }else{
-      let j=0;
-      for(let i=0;i<w*h;i++){
-        const v = pixels[i];
-        body[j++] = (v>>8)&0xFF;
-        body[j++] = v & 0xFF;
-      }
+    if(bytesPer===1){ for(let i=0;i<w*h;i++) body[i] = Math.min(255, pixels[i]); }
+    else{
+      let j=0; for(let i=0;i<w*h;i++){ const v = pixels[i]; body[j++] = (v>>8)&0xFF; body[j++] = v & 0xFF; }
     }
     const out = new Uint8Array(hbytes.length + body.length);
     out.set(hbytes,0); out.set(body,hbytes.length);
