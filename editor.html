@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>ROS2 Map + Keep-Out Editor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap 4 -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+  <style>
+    body{background:#111;color:#eee}
+    .toolbar{position:sticky;top:0;z-index:10;background:#1b1b1b;border-bottom:1px solid #333}
+    #canvasWrap{position:relative;display:inline-block}
+	#mapCanvas{
+	  image-rendering: pixelated;
+	  image-rendering: crisp-edges;
+	  border:1px solid #444;
+	  /* checkerboard just for the base layer */
+	  background: conic-gradient(#222 0 25%, #111 0 50%, #222 0 75%, #111 0 100%) 0 0/16px 16px;
+	}
+	#maskCanvas{
+	  image-rendering: pixelated;
+	  image-rendering: crisp-edges;
+	  border:1px solid #444;
+	  background: transparent !important;
+	  position:absolute; left:0; top:0; z-index:2;
+	  pointer-events: none;  /* click through to mapCanvas */
+	}
+	#canvasWrap{ position:relative; display:inline-block; }
+    .overlay-label{position:absolute; top:8px; left:8px; background:rgba(0,0,0,.5); padding:4px 8px; border-radius:4px; font-size:12px}
+    .dropzone{border:2px dashed #555; border-radius:6px; padding:12px; text-align:center; color:#bbb}
+    .dropzone.drag{background:#222; color:#fff; border-color:#888}
+    .small-note{font-size:12px; color:#aaa}
+    .spacer{height:12px}
+    .tool-btn.active{outline:2px solid #17a2b8}
+    .w-32{width:32px}
+  </style>
+</head>
+<body>
+<div class="toolbar p-2">
+  <div class="container-fluid">
+    <div class="form-row align-items-center">
+      <div class="col-auto">
+        <input type="file" id="yamlInput" accept=".yaml,.yml" class="d-none">
+        <button class="btn btn-sm btn-outline-info" id="btnLoadYaml">Load YAML</button>
+        <span id="yamlName" class="small-note ml-2">No YAML</span>
+      </div>
+      <div class="col-auto">
+        <input type="file" id="pgmInput" accept=".pgm" class="d-none">
+        <button class="btn btn-sm btn-outline-info" id="btnLoadPgm">Load PGM</button>
+        <span id="pgmName" class="small-note ml-2">No PGM</span>
+      </div>
+      <div class="col-auto">
+        <div class="btn-group btn-group-sm" role="group" aria-label="Tools">
+          <button class="btn btn-outline-light tool-btn" data-tool="paint" title="Paint walls (occupied)">🖌️ Paint</button>
+          <button class="btn btn-outline-light tool-btn" data-tool="erase" title="Erase to free">🩹 Erase</button>
+          <button class="btn btn-outline-light tool-btn" data-tool="mask" title="Draw keep-out mask">🚧 Keep‑Out</button>
+        </div>
+      </div>
+      <div class="col-auto">
+        <label class="mb-0 mr-2">Brush</label>
+        <input type="range" id="brushSize" min="1" max="40" value="6">
+        <span id="brushLabel" class="small-note">6 px</span>
+      </div>
+      <div class="col-auto">
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="checkbox" id="showMask" checked>
+          <label class="form-check-label" for="showMask">Show Mask</label>
+        </div>
+		<div class="form-check form-check-inline">
+		  <input class="form-check-input" type="checkbox" id="invertDisplay">
+		  <label class="form-check-label" for="invertDisplay">Invert Display</label>
+		</div>
+		<div class="form-check form-check-inline">
+		  <input class="form-check-input" type="checkbox" id="autoLevels" checked>
+		  <label class="form-check-label" for="autoLevels">Auto-levels</label>
+		</div>
+      </div>
+      <div class="col-auto">
+        <button class="btn btn-sm btn-success" id="btnDownloadMap">Download Map</button>
+        <button class="btn btn-sm btn-warning" id="btnDownloadMask">Download Keepout Mask</button>
+      </div>
+      <div class="col small-note ml-auto text-right">
+        Tip: black = occupied walls; white = free space. Keep‑out mask is exported separately and used by Nav2’s KeepoutFilter. 
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid mt-3">
+  <div class="row">
+    <div class="col-lg-3 mb-3">
+      <div id="drop" class="dropzone">
+        <div><strong>Drag & drop</strong> your <code>.yaml</code> and <code>.pgm</code> here</div>
+        <div class="small-note">…or use the buttons above</div>
+      </div>
+      <div class="spacer"></div>
+      <div class="card bg-dark">
+        <div class="card-body p-2">
+          <div class="small-note">YAML preview</div>
+          <pre id="yamlPreview" class="mb-0" style="max-height:240px; overflow:auto;"></pre>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <div class="card bg-dark">
+        <div class="card-body p-2">
+  	    <div class="small-note">Debug</div>
+  	    <div class="small-note" id="dbgInfo">—</div>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <div class="card bg-dark">
+        <div class="card-body p-2">
+          <div class="small-note">Legend</div>
+          <div class="small-note">Paint 🖌️: sets pixels to <code>0</code> (occupied/black)</div>
+          <div class="small-note">Erase 🩹: sets pixels to <code>maxval</code> (free/white)</div>
+          <div class="small-note">Keep‑Out 🚧: draws on mask (black = keepout)</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-9">
+      <div id="canvasWrap">
+        <div class="overlay-label">Map</div>
+        <canvas id="mapCanvas"></canvas>
+        <canvas id="maskCanvas" style="position:absolute; left:0; top:0;"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- jQuery + Bootstrap 4 + js-yaml -->
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+
+<script>
+(function(){
+  // State
+  let yamlObj = null, yamlText = '', yamlName = 'map.yaml';
+  let pgm = null, pgmName = 'map.pgm';
+  let mask = null; // Uint8ClampedArray same size as PGM, 0..255 (0 = keepout/black, 255 = no effect/white)
+  let tool = 'paint';
+  let drawing = false;
+  let brush = 6;
+  let scale = 1; // canvas zoom scale (1:1 pixels)
+
+  const $yamlName = $('#yamlName'), $pgmName = $('#pgmName');
+  const mapCanvas = document.getElementById('mapCanvas');
+  const maskCanvas = document.getElementById('maskCanvas');
+  maskCanvas.style.background = 'transparent';
+  maskCanvas.style.pointerEvents = 'none';
+  const mapCtx = mapCanvas.getContext('2d');
+  const maskCtx = maskCanvas.getContext('2d');
+
+  // --- UI handlers ---
+  $('.tool-btn').on('click', function(){
+    $('.tool-btn').removeClass('active');
+    $(this).addClass('active');
+    tool = $(this).data('tool');
+  });
+  $('.tool-btn[data-tool="paint"]').addClass('active');
+
+  $('#brushSize').on('input change', function(){
+    brush = parseInt(this.value,10);
+    $('#brushLabel').text(brush + ' px');
+  });
+
+  $('#showMask').on('change', function(){
+    maskCanvas.style.display = this.checked ? 'block' : 'none';
+    redrawMask();
+  });
+
+  $('#btnLoadYaml').on('click', () => $('#yamlInput').click());
+  $('#btnLoadPgm').on('click', () => $('#pgmInput').click());
+  $('#yamlInput').on('change', e => handleFiles(e.target.files));
+  $('#pgmInput').on('change', e => handleFiles(e.target.files));
+  $('#invertDisplay, #autoLevels').on('change', ()=> redrawMap());
+
+  // Drag & drop
+  const drop = document.getElementById('drop');
+  const stop = e => { e.preventDefault(); e.stopPropagation(); };
+  ['dragenter','dragover','dragleave','drop'].forEach(n => drop.addEventListener(n, stop, false));
+  drop.addEventListener('dragover', () => drop.classList.add('drag'));
+  drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
+  drop.addEventListener('drop', (e)=>{
+    drop.classList.remove('drag');
+    handleFiles(e.dataTransfer.files);
+  });
+
+  // Canvas drawing
+  function setCanvasSize(w,h){
+    const maxW = Math.min(window.innerWidth - 60, 1600);
+    scale = Math.max(1, Math.floor(maxW / w));
+    const cw = w * scale, ch = h * scale;
+    mapCanvas.width = cw; mapCanvas.height = ch;
+    maskCanvas.width = cw; maskCanvas.height = ch;
+    maskCanvas.style.left = '0px'; maskCanvas.style.top = '0px';
+  }
+
+  function mapToCanvas(x, y){ return [Math.floor(x*scale), Math.floor(y*scale)]; }
+  function canvasToMap(cx, cy){ return [Math.floor(cx/scale), Math.floor(cy/scale)]; }
+
+  function drawCircle(ctx, cx, cy, r){
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, 2*Math.PI);
+    ctx.fill();
+  }
+
+  function paintAt(cx, cy){
+    if(!pgm) return;
+    const [mx,my] = canvasToMap(cx, cy);
+    const rad = Math.max(1, Math.floor(brush/2));
+    const maxval = pgm.maxval;
+    const w = pgm.width, h = pgm.height;
+    // Decide target buffer & value
+    if(tool === 'mask'){
+      // draw black on mask (0 = keepout), white = no keepout
+      const val = 0;
+      paintBuffer(mask, w, h, mx, my, rad, val);
+      redrawMask();
+    }else{
+      // modify pgm pixels: paint->0 (occupied), erase->maxval (free)
+      const val = (tool==='paint') ? 0 : maxval;
+      paintBuffer(pgm.pixels, w, h, mx, my, rad, val);
+      redrawMap();
+    }
+  }
+
+  function paintBuffer(buf, w, h, mx, my, rad, value){
+    for(let y = my-rad; y <= my+rad; y++){
+      if(y < 0 || y >= h) continue;
+      for(let x = mx-rad; x <= mx+rad; x++){
+        if(x < 0 || x >= w) continue;
+        const dx = x - mx, dy = y - my;
+        if(dx*dx + dy*dy <= rad*rad){
+          buf[y*w + x] = value;
+        }
+      }
+    }
+  }
+
+  mapCanvas.addEventListener('mousedown', e => { drawing = true; paintAt(e.offsetX, e.offsetY); });
+  mapCanvas.addEventListener('mousemove', e => { if(drawing) paintAt(e.offsetX, e.offsetY); });
+  window.addEventListener('mouseup', ()=> drawing=false);
+
+  // --- Loaders ---
+  function handleFiles(fileList){
+    Array.from(fileList).forEach(file=>{
+      if(file.name.endsWith('.yaml') || file.name.endsWith('.yml')){
+        readText(file).then(txt=>{
+          yamlText = txt;
+          yamlObj = jsyaml.load(txt);
+          yamlName = file.name;
+          $yamlName.text(file.name);
+          $('#yamlPreview').text(txt);
+          maybeReady();
+        });
+      }else if(file.name.endsWith('.pgm')){
+        readBinary(file).then(buf=>{
+          pgmName = file.name;
+          pgm = parsePGM(new Uint8Array(buf));
+          $pgmName.text(file.name);
+          if(!mask || (mask.length !== pgm.width*pgm.height)){
+            mask = new Uint8ClampedArray(pgm.width*pgm.height);
+            mask.fill(255); // default: no keepout
+          }
+          setupCanvasFromPGM();
+        }).catch(err=> alert('PGM parse error: ' + err.message));
+      }
+    });
+  }
+
+  function readText(file){
+    return new Promise((res,rej)=>{
+      const fr = new FileReader();
+      fr.onload = () => res(fr.result);
+      fr.onerror = rej;
+      fr.readAsText(file);
+    });
+  }
+  function readBinary(file){
+    return new Promise((res,rej)=>{
+      const fr = new FileReader();
+      fr.onload = () => res(fr.result);
+      fr.onerror = rej;
+      fr.readAsArrayBuffer(file);
+    });
+  }
+
+  function maybeReady(){
+    if(yamlObj && pgm){
+      // nothing else required, but we could validate sizes
+    }
+  }
+
+  function setupCanvasFromPGM(){
+    if(!pgm) return;
+    setCanvasSize(pgm.width, pgm.height);
+    redrawMap();
+    redrawMask();
+	$('#dbgInfo').text(`PGM: ${pgm.width}×${pgm.height}, maxval=${pgm.maxval}, magic=${pgm.magic}; YAML negate=${yamlObj?.negate ?? '(n/a)'}`);
+  }
+
+  function redrawMap(){
+    if(!pgm) return;
+    const {width:w, height:h, pixels, maxval} = pgm;
+    if(!w || !h || !maxval) return;
+  
+    // compute min/max for auto-levels (fast scan)
+    let pmin = 65535, pmax = 0;
+    if($('#autoLevels').prop('checked')){
+      for(let i=0;i<w*h;i++){
+        const v = pixels[i];
+        if(v < pmin) pmin = v;
+        if(v > pmax) pmax = v;
+      }
+      if(pmax === pmin) { pmin = 0; pmax = maxval; } // avoid div-by-zero
+    } else {
+      pmin = 0; pmax = maxval;
+    }
+  
+    const inv = $('#invertDisplay').prop('checked') || (yamlObj && Number(yamlObj.negate) === 1);
+  
+    // build 8-bit grayscale with normalization
+    const img = mapCtx.createImageData(w, h);
+    const scale = (pmax > pmin) ? (255 / (pmax - pmin)) : 1;
+  
+    for(let i=0;i<w*h;i++){
+      let v = pixels[i];
+      // normalize to 0..255 based on pmin..pmax
+      let g = Math.round((v - pmin) * scale);
+      if(g < 0) g = 0; else if(g > 255) g = 255;
+      if(inv) g = 255 - g;      // visual invert
+      img.data[4*i+0] = g;
+      img.data[4*i+1] = g;
+      img.data[4*i+2] = g;
+      img.data[4*i+3] = 255;
+    }
+  
+    // draw scaled
+    const tmp = document.createElement('canvas');
+    tmp.width = w; tmp.height = h;
+    tmp.getContext('2d').putImageData(img,0,0);
+    mapCtx.imageSmoothingEnabled = false;
+    mapCtx.clearRect(0,0,mapCanvas.width,mapCanvas.height);
+    mapCtx.drawImage(tmp, 0,0, mapCanvas.width, mapCanvas.height);
+  }
+
+  function redrawMask(){
+    if(!pgm || !mask) return;
+    const {width:w, height:h} = pgm;
+    const img = maskCtx.createImageData(w, h);
+    for(let i=0;i<w*h;i++){
+      // visualize the mask as semi-transparent red where keepout (low values)
+      const m = mask[i];               // 0..255
+      const isKO = (m <= 20);          // treat near-black as keepout
+      img.data[4*i+0] = isKO ? 255 : 0;
+      img.data[4*i+1] = 0;
+      img.data[4*i+2] = 0;
+      img.data[4*i+3] = isKO ? 120 : 0;
+    }
+    const tmp = document.createElement('canvas');
+    tmp.width = w; tmp.height = h;
+    tmp.getContext('2d').putImageData(img,0,0);
+    maskCtx.imageSmoothingEnabled = false;
+    maskCtx.clearRect(0,0,maskCanvas.width,maskCanvas.height);
+    maskCtx.drawImage(tmp, 0,0, maskCanvas.width, maskCanvas.height);
+  }
+
+  // --- PGM parsing/serialization (P5 & P2) ---
+  function parsePGM(uint8){
+    // Very small, permissive parser handling comments and both ASCII (P2) & binary (P5).
+    // Return: { magic, width, height, maxval, pixels: Uint16Array/Uint8Array }
+    const textHead = new TextDecoder().decode(uint8.slice(0, 1024));
+    const magic = textHead.slice(0,2);
+    if(magic !== 'P5' && magic !== 'P2') throw new Error('Unsupported PGM magic (need P5 or P2)');
+    // tokenization for header (skip comments)
+    function* tokens(bytes){
+      let s = '';
+      for(let i=0;i<bytes.length;i++){
+        const c = String.fromCharCode(bytes[i]);
+        if(c==='#'){ // comment until newline
+          while(i<bytes.length && String.fromCharCode(bytes[i])!=='\n') i++;
+          continue;
+        }
+        if(/\s/.test(c)){
+          if(s.length){ yield s; s=''; }
+        } else s+=c;
+        if(s.length>256) throw new Error('Header token too long');
+      }
+      if(s.length) yield s;
+    }
+    const it = tokens(uint8);
+    const mg = it.next().value;
+    if(mg !== magic) throw new Error('Malformed header');
+    const w = parseInt(it.next().value,10);
+    const h = parseInt(it.next().value,10);
+    const maxv = parseInt(it.next().value,10);
+    if(!(w>0 && h>0 && maxv>0)) throw new Error('Invalid pgm dims/maxval');
+
+    if(magic === 'P2'){ // ASCII data
+      const restTxt = new TextDecoder().decode(uint8);
+      // strip header part
+      const headerRe = new RegExp(`^\\s*${magic}[\\s\\S]*?\\b${maxv}\\b`);
+      const headerMatch = restTxt.match(headerRe);
+      const start = headerMatch ? headerMatch[0].length : 0;
+      const nums = restTxt.slice(start).match(/\d+/g) || [];
+      if(nums.length < w*h) throw new Error('P2 data too short');
+      const pixels = new Uint16Array(w*h);
+      for(let i=0;i<w*h;i++) pixels[i] = Math.min(maxv, parseInt(nums[i],10));
+      return {magic, width:w, height:h, maxval:maxv, pixels};
+    }else{
+      // Binary: find the start of raster data (byte after the last header number)
+		// find raster start by counting numeric tokens (magic, w, h, maxval)
+		let nums = 0, i = 2, inTok = false;
+		while(i < uint8.length && nums < 3){
+		  const c = uint8[i];
+		  if(c === 35){ // '#'
+			while(i < uint8.length && uint8[i] !== 10) i++;
+		  } else if(c > 32){ // non-whitespace
+			if(!inTok){ inTok = true; nums++; }
+		  } else { // whitespace
+			if(inTok){ inTok = false; }
+		  }
+		  i++;
+		}
+		// skip trailing whitespace after maxval
+		while(i < uint8.length && uint8[i] <= 32) i++;
+		const dataStart = i;
+      const pixels = (maxv>255) ? new Uint16Array(w*h) : new Uint8Array(w*h);
+      const bytesPer = (maxv>255)?2:1;
+      const needed = w*h*bytesPer;
+      if(dataStart + needed > uint8.length) throw new Error('P5 data too short');
+      if(bytesPer===1){
+        pixels.set(uint8.slice(dataStart, dataStart+needed));
+      }else{
+        // big-endian by spec: two bytes per sample, msb first
+        let p=0;
+        for(let k=0;k<needed;k+=2){
+          pixels[p++] = (uint8[dataStart+k]<<8) | uint8[dataStart+k+1];
+        }
+      }
+      return {magic, width:w, height:h, maxval:maxv, pixels};
+    }
+  }
+
+  function encodePGM(pgm){
+    const {width:w, height:h, maxval, pixels} = pgm;
+    const header = `P5\n${w} ${h}\n${maxval}\n`;
+    const enc = new TextEncoder();
+    const hbytes = enc.encode(header);
+    const bytesPer = (maxval>255)?2:1;
+    const body = new Uint8Array(w*h*bytesPer);
+    if(bytesPer===1){
+      for(let i=0;i<w*h;i++) body[i] = Math.min(255, pixels[i]);
+    }else{
+      let j=0;
+      for(let i=0;i<w*h;i++){
+        const v = pixels[i];
+        body[j++] = (v>>8)&0xFF;
+        body[j++] = v & 0xFF;
+      }
+    }
+    const out = new Uint8Array(hbytes.length + body.length);
+    out.set(hbytes,0); out.set(body,hbytes.length);
+    return out;
+  }
+
+  // --- Download helpers ---
+  function dlBytes(bytes, filename, mime='application/octet-stream'){
+    const blob = new Blob([bytes], {type:mime});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  }
+  function dlText(txt, filename, mime='text/yaml'){
+    const blob = new Blob([txt], {type:mime});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function buildUpdatedYaml(imageName){
+    if(!yamlObj) return '';
+    // Keep original YAML as much as possible, only update image field
+    const y = Object.assign({}, yamlObj, { image: imageName });
+    return jsyaml.dump(y);
+  }
+
+  // Map download
+  $('#btnDownloadMap').on('click', ()=>{
+    if(!pgm || !yamlObj){ alert('Load YAML and PGM first.'); return; }
+    // Serialize PGM (with modified pixels)
+    const pgmBytes = encodePGM(pgm);
+    // Suggest new names
+    const outPgm = pgmName.replace(/\.pgm$/i,'_edited.pgm');
+    const outYaml = (yamlName||'map.yaml').replace(/\.ya?ml$/i,'_edited.yaml');
+    dlBytes(pgmBytes, outPgm, 'image/x-portable-graymap');
+    const ytxt = buildUpdatedYaml(outPgm);
+    dlText(ytxt, outYaml, 'text/yaml');
+  });
+
+  // Keep-out mask download (PGM + YAML)
+  $('#btnDownloadMask').on('click', ()=>{
+    if(!pgm || !yamlObj || !mask){ alert('Load YAML and PGM first.'); return; }
+    // Create a PGM from mask data (0 = keepout, 255 = no effect)
+    const m = {
+      magic:'P5',
+      width: pgm.width,
+      height: pgm.height,
+      maxval: 255,
+      pixels: mask
+    };
+    const maskBytes = encodePGM(m);
+    const base = (pgmName||'map.pgm').replace(/\.pgm$/i,'');
+    const outMaskPgm = base + '_keepout.pgm';
+    const outMaskYaml = base + '_keepout.yaml';
+
+    // YAML mostly mirrors the base map YAML; just point to new image.
+    // (If you deliberately change size/origin/resolution of the mask, also change them here.)
+    const y = Object.assign({}, yamlObj, { image: outMaskPgm });
+    const ytxt = jsyaml.dump(y);
+
+    dlBytes(maskBytes, outMaskPgm, 'image/x-portable-graymap');
+    dlText(ytxt, outMaskYaml, 'text/yaml');
+  });
+
+})();
+</script>
+</body>
+</html>
