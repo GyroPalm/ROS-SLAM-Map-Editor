@@ -17,6 +17,7 @@ The map editor can be thought of as a specialized paint tool, allowing users to 
 - [x] Invert and Auto-level options
 - [x] Paint or Erase Walls in your PGM Map
 - [x] Paint or Erase Keep-out zones in your PGM Map
+- [x] Un-Scan Area (Mark area as unknown)
 - [x] Line or Rectangle Tools for Clean Edits
 - [x] Live-Preview Overlay for Brushing or Drawing Lines/Rectangles
 - [x] Multi-level Undo and Redo Capabilities

@@ -107,6 +107,7 @@
         <div class="btn-group btn-group-sm" role="group" aria-label="Tools">
           <button class="btn btn-outline-light tool-btn" data-tool="paint" title="Paint Walls (occupied)"><i class="fa fa-paint-brush"></i> Wall</button>
           <button class="btn btn-outline-light tool-btn" data-tool="erase" title="Erase Map + Keepout"><i class="fa fa-eraser"></i> Erase</button>
+		  <button class="btn btn-outline-light tool-btn" data-tool="unscan" title="Mark as unknown (un-scanned)"><i class="fa fa-minus-square-o"></i> Un-Scan</button>
           <button class="btn btn-outline-light tool-btn" data-tool="mask" title="Draw Keepout Mask"><i class="fa fa-ban"></i> Keep-Out</button>
         </div>
       </div>
@@ -188,7 +189,8 @@
           <div class="small-note mb-2"><strong>Legend</strong></div>
           <div class="small-note"><i class="fa fa-paint-brush"></i> Wall: Sets map pixels to <code>0</code> (occupied/black)</div>
           <div class="small-note"><i class="fa fa-eraser"></i> Erase: map→<code>maxval</code> (free), mask→<code>255</code> (no-keepout)</div>
-          <div class="small-note"><i class="fa fa-ban"></i> Keep-Out: draws black on mask (keepout)</div>
+		  <div class="small-note"><i class="fa fa-minus-square-o"></i> &nbsp;Un-Scan: Sets map pixels to light gray (unknown)</div>
+          <div class="small-note"><i class="fa fa-ban"></i> &nbsp;Keep-Out: Draws black on mask (keepout)</div>
 		  <div class="spacer"></div>
 		  <div class="small-note mt-3"><i>Powered by GyroPalm VIMPAACT</i></div>
         </div>
@@ -536,7 +538,7 @@
     const [mx,my] = canvasToMap(cx, cy);
     const rad = Math.max(1, Math.floor(brush/2));
     const w = pgm.width, h = pgm.height, maxval = pgm.maxval;
-
+  
     if(tool === 'mask'){
       paintBuffer('mask', mask, w, h, mx, my, rad, 0);
       redrawMask();
@@ -547,6 +549,9 @@
       paintBuffer('pgm', pgm.pixels, w, h, mx, my, rad, maxval);
       paintBuffer('mask', mask, w, h, mx, my, rad, 255);
       redrawMap(); redrawMask();
+    } else if(tool === 'unscan'){
+      paintBuffer('pgm', pgm.pixels, w, h, mx, my, rad, getUnknownVal());
+      redrawMap();
     }
   }
 
@@ -567,24 +572,34 @@
       }
     }
   }
+  
+  // Return the pixel value that corresponds to #CDCDCD (205/255), scaled to current maxval
+  function getUnknownVal(){
+    const maxv = pgm ? pgm.maxval : 255;
+    // 0xCD/255 ≈ 0.8039 → round to the nearest integer level of the PGM
+    return Math.round(0.8039215686 * maxv);
+  }
 
   function drawThickLine(cx1, cy1, cx2, cy2){
-    // Map coords
     let [x0,y0] = canvasToMap(cx1, cy1);
     let [x1,y1] = canvasToMap(cx2, cy2);
     const dx = Math.abs(x1 - x0), dy = Math.abs(y1 - y0);
     const sx = x0 < x1 ? 1 : -1;
     const sy = y0 < y1 ? 1 : -1;
     let err = dx - dy;
-
+  
     const w = pgm.width, h = pgm.height, maxval = pgm.maxval;
     const rad = Math.max(1, Math.floor(brush/2));
+    const unknown = getUnknownVal();
+  
     const drawPoint = (mx,my)=>{
       if(tool==='paint')      paintBuffer('pgm', pgm.pixels, w,h, mx,my, rad, 0);
       else if(tool==='mask')  paintBuffer('mask', mask,       w,h, mx,my, rad, 0);
       else if(tool==='erase'){paintBuffer('pgm', pgm.pixels,  w,h, mx,my, rad, maxval);
                                paintBuffer('mask', mask,      w,h, mx,my, rad, 255);}
+      else if(tool==='unscan'){paintBuffer('pgm', pgm.pixels, w,h, mx,my, rad, unknown);}
     };
+  
     while(true){
       drawPoint(x0,y0);
       if(x0 === x1 && y0 === y1) break;
@@ -623,9 +638,10 @@
     const yMax = Math.min(pgm.height-1, Math.max(my1, my2));
   
     const w = pgm.width, maxval = pgm.maxval;
+	const unknown = getUnknownVal();
   
     // Decide values per active tool
-    const mapVal  = (tool==='paint') ? 0 : (tool==='erase' ? maxval : null);
+    const mapVal  = (tool==='paint') ? 0 : (tool==='erase' ? maxval : (tool==='unscan' ? unknown : null));
     const maskVal = (tool==='mask')  ? 0 : (tool==='erase' ? 255    : null);
   
     for(let y = yMin; y <= yMax; y++){
@@ -680,21 +696,24 @@
     prevCtx.lineCap = 'round';
   
     if(shape==='line'){
-      prevCtx.strokeStyle = (tool==='mask') ? 'rgba(255,0,0,0.7)' :
-                             (tool==='erase') ? 'rgba(255,255,255,0.85)' :
-                                                'rgba(0,0,0,0.85)';
+      prevCtx.strokeStyle = (tool==='mask')   ? 'rgba(255,0,0,0.7)' :
+							(tool==='erase')  ? 'rgba(255,255,255,0.85)' :
+							(tool==='unscan') ? 'rgba(205,205,205,0.9)' :
+												'rgba(0,0,0,0.85)';
       prevCtx.beginPath(); prevCtx.moveTo(cx1, cy1); prevCtx.lineTo(cx2, cy2); prevCtx.stroke();
     } else if(shape==='rect'){
-      prevCtx.strokeStyle = (tool==='mask') ? 'rgba(255,0,0,0.7)' :
-                             (tool==='erase') ? 'rgba(255,255,255,0.85)' :
-                                                'rgba(0,0,0,0.85)';
+      prevCtx.strokeStyle = (tool==='mask')   ? 'rgba(255,0,0,0.7)' :
+							(tool==='erase')  ? 'rgba(255,255,255,0.85)' :
+							(tool==='unscan') ? 'rgba(205,205,205,0.9)' :
+												'rgba(0,0,0,0.85)';
       const x = Math.min(cx1,cx2), y = Math.min(cy1,cy2);
       const w = Math.abs(cx2-cx1), h = Math.abs(cy2-cy1);
       if(filledRect){
         // show a translucent fill preview
-        prevCtx.fillStyle = (tool==='mask') ? 'rgba(255,0,0,0.25)' :
-                            (tool==='erase') ? 'rgba(255,255,255,0.25)' :
-                                               'rgba(0,0,0,0.25)';
+        prevCtx.fillStyle = (tool==='mask')   ? 'rgba(255,0,0,0.25)' :
+						  (tool==='erase')  ? 'rgba(255,255,255,0.25)' :
+						  (tool==='unscan') ? 'rgba(205,205,205,0.25)' :
+											  'rgba(0,0,0,0.25)';
         prevCtx.fillRect(x, y, w, h);
       }
       prevCtx.strokeRect(x, y, w, h);
