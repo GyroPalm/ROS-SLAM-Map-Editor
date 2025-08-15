@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>ROS2 Map + Keep-Out Editor</title>
+  <meta name="description" content="A web-based map editor for quick editing and saving of ROS and ROS2 SLAM maps and keep-out zones.">
+  <meta name="keywords" content="online, web, ros, ros2, SLAM, map,, editor, robotics, robots, responsive, pgm">
+  <meta name="author" content="Dominick Lee">
+  <title>Online ROS2 SLAM Map Editor</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <!-- Bootstrap 4 + Font Awesome 4.7 -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
@@ -64,25 +67,29 @@
       z-index: 4;
       display: none;
     }
+	/* YAML preview text */
+	#yamlPreview{
+      color: #26a7bb !important;
+	}
   </style>
 </head>
 <body>
 <div class="toolbar p-2">
   <div class="container-fluid">
     <div class="form-row align-items-center">
-      <div class="col-auto">
+      <div class="col-auto pb-2">
         <input type="file" id="yamlInput" accept=".yaml,.yml" class="d-none">
         <button class="btn btn-sm btn-outline-info" id="btnLoadYaml"><i class="fa fa-file-text-o"></i> Load YAML</button>
         <span id="yamlName" class="small-note ml-2">No YAML</span>
       </div>
-      <div class="col-auto">
+      <div class="col-auto pb-2">
         <input type="file" id="pgmInput" accept=".pgm" class="d-none">
         <button class="btn btn-sm btn-outline-info" id="btnLoadPgm"><i class="fa fa-picture-o"></i> Load PGM</button>
         <span id="pgmName" class="small-note ml-2">No PGM</span>
       </div>
 
       <!-- Target (which layer / action) -->
-      <div class="col-auto">
+      <div class="col-auto pb-2">
         <div class="btn-group btn-group-sm" role="group" aria-label="Tools">
           <button class="btn btn-outline-light tool-btn" data-tool="paint" title="Paint walls (occupied)"><i class="fa fa-paint-brush"></i> Paint</button>
           <button class="btn btn-outline-light tool-btn" data-tool="erase" title="Erase map + keepout"><i class="fa fa-eraser"></i> Erase</button>
@@ -91,7 +98,7 @@
       </div>
 
       <!-- Shape -->
-      <div class="col-auto">
+      <div class="col-auto pb-2">
         <div class="btn-group btn-group-sm" role="group" aria-label="Shape">
           <button class="btn btn-outline-light shape-btn" data-shape="freehand" title="Freehand"><i class="fa fa-pencil"></i></button>
           <button class="btn btn-outline-light shape-btn" data-shape="line" title="Line"><i class="fa fa-minus"></i></button>
@@ -100,14 +107,14 @@
       </div>
 
       <!-- Brush -->
-      <div class="col-auto">
+      <div class="col-auto pb-2">
         <label class="mb-0 mr-2"><i class="fa fa-dot-circle-o"></i> Brush</label>
         <input type="range" id="brushSize" min="1" max="60" value="8">
         <span id="brushLabel" class="small-note">8 px</span>
       </div>
 
       <!-- Display toggles -->
-      <div class="col-auto">
+      <div class="col-auto pb-2">
         <div class="form-check form-check-inline">
           <input class="form-check-input" type="checkbox" id="showMask" checked>
           <label class="form-check-label" for="showMask">Show Mask</label>
@@ -123,7 +130,7 @@
       </div>
 
       <!-- Zoom / Undo-Redo / Downloads -->
-      <div class="col-auto">
+      <div class="col-auto pb-2">
         <div class="btn-group btn-group-sm" role="group" aria-label="Zoom">
           <button class="btn btn-outline-light" id="zoomOut" title="Zoom Out (−)"><i class="fa fa-search-minus"></i></button>
           <button class="btn btn-outline-light" id="zoomIn" title="Zoom In (+)"><i class="fa fa-search-plus"></i></button>
@@ -135,13 +142,13 @@
         </div>
       </div>
 
-      <div class="col-auto">
+      <div class="col-auto pb-2">
         <button class="btn btn-sm btn-success" id="btnDownloadMap"><i class="fa fa-download"></i> Download Map</button>
         <button class="btn btn-sm btn-warning" id="btnDownloadMask"><i class="fa fa-download"></i> Download Keepout Mask</button>
       </div>
 
-      <div class="col small-note ml-auto text-right">
-        Tip: choose a target (Paint/Erase/Keep-Out), then a shape (Freehand/Line/Rect). Spacebar+drag to pan.
+      <div class="col small-note ml-auto text-right pb-2">
+        Tip: Choose a target (Paint/Erase/Keep-Out), then a shape (Freehand/Line/Rect). Spacebar+Drag to pan.
       </div>
     </div>
   </div>
