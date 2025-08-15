@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROS SLAM Map Editor</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .hero {
+            background: linear-gradient(135deg, #007bff, #6610f2);
+            color: white;
+            padding: 4rem 1rem;
+            text-align: center;
+        }
+        .hero img {
+            max-width: 600px;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            margin-top: 2rem;
+        }
+        .features .fa {
+            font-size: 2rem;
+            color: #007bff;
+            margin-bottom: 1rem;
+        }
+        .btn-custom {
+            background-color: #28a745;
+            color: white;
+            font-size: 1.2rem;
+            padding: 0.75rem 1.5rem;
+        }
+        footer {
+            background-color: #343a40;
+            color: #ccc;
+            padding: 1rem 0;
+            text-align: center;
+            margin-top: 3rem;
+        }
+        footer a {
+            color: #ccc;
+        }
+        footer a:hover {
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Hero Section -->
+    <div class="hero">
+        <h1 class="display-4 font-weight-bold">ROS SLAM Map Editor</h1>
+        <p class="lead">A web-based map editor for quick editing of ROS and ROS2 SLAM maps</p>
+        <a href="editor.html" class="btn btn-custom mt-3"><i class="fas fa-edit"></i> Launch Editor</a>
+        <div>
+            <img src="img/screenshot-main.png" alt="ROS SLAM Map Editor Screenshot">
+        </div>
+    </div>
+
+    <!-- Overview -->
+    <div class="container mt-5">
+        <h2 class="mb-4 text-center">Overview</h2>
+        <p>
+            The ROS SLAM Map Editor is a hassle-free, open-source tool that allows engineers and researchers to refine their ROS/ROS2 SLAM maps directly in the browser — no external image editors required.
+            It’s designed for quick, precise adjustments to maps created by packages like 
+            <a href="https://github.com/SteveMacenski/slam_toolbox" target="_blank">slam_toolbox</a>.
+        </p>
+        <p>
+            Easily modify walls, obstacles, keep-out zones, and other environmental details for a more accurate representation of your environment.
+        </p>
+    </div>
+
+    <!-- Features -->
+    <div class="container features mt-5">
+        <h2 class="mb-4 text-center">Features</h2>
+        <div class="row">
+            <div class="col-md-4 text-center mb-4">
+                <i class="fa fa-globe"></i>
+                <h5>Browser-based</h5>
+                <p class="lead">Works entirely in your browser. No installation required. Privacy-first design.</p>
+            </div>
+            <div class="col-md-4 text-center mb-4">
+                <i class="fa fa-mouse-pointer"></i>
+                <h5>Intuitive Editing</h5>
+                <p class="lead">Paint, erase, measure, and draw with responsive tools for desktops and tablets.</p>
+            </div>
+            <div class="col-md-4 text-center mb-4">
+                <i class="fa fa-download"></i>
+                <h5>Easy Export</h5>
+                <p class="lead">Download updated PGM and YAML files instantly, with separate keep-out masks.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Usage -->
+    <div class="container mt-5">
+        <h2 class="mb-4 text-center">Quick Start</h2>
+		<hr />
+        <ol>
+            <li>Drag & Drop your <code>map.yaml</code> and <code>map.pgm</code> into the editor.</li>
+            <li>Choose your edit mode: Wall, Erase, Keep-Out, Un-Scan, Line, Rectangle, or Measure.</li>
+            <li>Make your edits with zoom, pan, and brush size controls.</li>
+            <li>Download your updated map files when done.</li>
+        </ol>
+        <div class="text-center mt-5">
+            <a href="editor.html" class="btn btn-primary btn-lg"><i class="fas fa-play"></i> Try It Now</a>
+            <a href="https://github.com/GyroPalm/ROS-SLAM-Map-Editor" class="btn btn-secondary btn-lg"><i class="fab fa-github"></i> GitHub Repo</a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>
+            Created by <a href="https://dominicklee.com" target="_blank">Dominick Lee</a> for <a href="https://vimpaact.gyropalm.com/" target="_blank">GyroPalm VIMPAACT</a> | &nbsp;&copy; 2025 by GyroPalm, LLC.
+        </p>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
