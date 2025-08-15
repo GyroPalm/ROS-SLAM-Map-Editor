@@ -446,27 +446,40 @@
   function undo(){
     const changeSet = undoStack.pop();
     if(!changeSet) return;
-    // To build a redo set, we need the inverse (swap prev/next)
+  
+    // Apply the inverse (set each pixel back to its "prev"),
+    // and stage a proper redo that will restore to "next".
     const redoSet = [];
-    for(const ch of changeSet){
+    for (const ch of changeSet) {
       const buf = (ch.layer === 'pgm') ? pgm.pixels : mask;
-      redoSet.push({layer: ch.layer, idx: ch.idx, prev: buf[ch.idx], next: ch.prev});
+      // current value should be ch.next; we revert to ch.prev
       buf[ch.idx] = ch.prev;
+      // prepare redo to go back to NEXT (the drawn value)
+      redoSet.push({ layer: ch.layer, idx: ch.idx, prev: ch.prev, next: ch.next });
     }
     redoStack.push(redoSet);
-    redrawMap(); redrawMask();
+  
+    redrawMap(); 
+    redrawMask();
   }
+  
   function redo(){
     const changeSet = redoStack.pop();
     if(!changeSet) return;
+  
+    // Re-apply the "next" values and push the same set back onto undo
     const undoSet = [];
-    for(const ch of changeSet){
+    for (const ch of changeSet) {
       const buf = (ch.layer === 'pgm') ? pgm.pixels : mask;
-      undoSet.push({layer: ch.layer, idx: ch.idx, prev: buf[ch.idx], next: ch.next});
+      // current value should be ch.prev; we go to ch.next
       buf[ch.idx] = ch.next;
+      // keep a proper undo record (same prev/next pair)
+      undoSet.push({ layer: ch.layer, idx: ch.idx, prev: ch.prev, next: ch.next });
     }
     undoStack.push(undoSet);
-    redrawMap(); redrawMask();
+  
+    redrawMap(); 
+    redrawMask();
   }
 
   // ===== Painting primitives =====
