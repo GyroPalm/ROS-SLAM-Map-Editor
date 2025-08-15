@@ -88,22 +88,36 @@
         <span id="pgmName" class="small-note ml-2">No PGM</span>
 		<span id="maskName" class="small-note ml-2">No Keepout</span>
       </div>
+	  
+      <!-- Zoom / Undo-Redo -->
+      <div class="col-auto pb-2">
+        <div class="btn-group btn-group-sm" role="group" aria-label="Zoom">
+          <button class="btn btn-outline-light" id="zoomOut" title="Zoom Out (−)"><i class="fa fa-search-minus"></i></button>
+          <button class="btn btn-outline-light" id="zoomIn" title="Zoom In (+)"><i class="fa fa-search-plus"></i></button>
+          <button class="btn btn-outline-light" id="zoomReset" title="Reset Zoom"><i class="fa fa-compress"></i></button>
+        </div>
+        <div class="btn-group btn-group-sm ml-2" role="group">
+          <button class="btn btn-outline-warning" id="btnUndo" title="Undo (Ctrl+Z)"><i class="fa fa-undo"></i></button>
+          <button class="btn btn-outline-warning" id="btnRedo" title="Redo (Ctrl+Y / Shift+Z)"><i class="fa fa-repeat"></i></button>
+        </div>
+      </div>
 
       <!-- Target (which layer / action) -->
       <div class="col-auto pb-2">
         <div class="btn-group btn-group-sm" role="group" aria-label="Tools">
-          <button class="btn btn-outline-light tool-btn" data-tool="paint" title="Paint walls (occupied)"><i class="fa fa-paint-brush"></i> Paint</button>
-          <button class="btn btn-outline-light tool-btn" data-tool="erase" title="Erase map + keepout"><i class="fa fa-eraser"></i> Erase</button>
-          <button class="btn btn-outline-light tool-btn" data-tool="mask" title="Draw keep-out mask"><i class="fa fa-ban"></i> Keep-Out</button>
+          <button class="btn btn-outline-light tool-btn" data-tool="paint" title="Paint Walls (occupied)"><i class="fa fa-paint-brush"></i> Wall</button>
+          <button class="btn btn-outline-light tool-btn" data-tool="erase" title="Erase Map + Keepout"><i class="fa fa-eraser"></i> Erase</button>
+          <button class="btn btn-outline-light tool-btn" data-tool="mask" title="Draw Keepout Mask"><i class="fa fa-ban"></i> Keep-Out</button>
         </div>
       </div>
 
-      <!-- Shape -->
+      <!-- Shape Group -->
       <div class="col-auto pb-2">
         <div class="btn-group btn-group-sm" role="group" aria-label="Shape">
           <button class="btn btn-outline-light shape-btn" data-shape="freehand" title="Freehand"><i class="fa fa-pencil"></i></button>
           <button class="btn btn-outline-light shape-btn" data-shape="line" title="Line"><i class="fa fa-minus"></i></button>
           <button class="btn btn-outline-light shape-btn" data-shape="rect" title="Rectangle"><i class="fa fa-square-o"></i></button>
+		  <button class="btn btn-outline-light shape-btn" data-shape="measure" title="Measure Distance"><i class="fa fa-arrows-h"></i></button>
         </div>
       </div>
 
@@ -128,21 +142,13 @@
           <input class="form-check-input" type="checkbox" id="autoLevels" checked>
           <label class="form-check-label" for="autoLevels">Auto-levels</label>
         </div>
+		<div class="form-check form-check-inline">
+		  <input class="form-check-input" type="checkbox" id="filledRect">
+		  <label class="form-check-label" for="filledRect">Filled</label>
+		</div>
       </div>
 
-      <!-- Zoom / Undo-Redo / Downloads -->
-      <div class="col-auto pb-2">
-        <div class="btn-group btn-group-sm" role="group" aria-label="Zoom">
-          <button class="btn btn-outline-light" id="zoomOut" title="Zoom Out (−)"><i class="fa fa-search-minus"></i></button>
-          <button class="btn btn-outline-light" id="zoomIn" title="Zoom In (+)"><i class="fa fa-search-plus"></i></button>
-          <button class="btn btn-outline-light" id="zoomReset" title="Reset Zoom"><i class="fa fa-compress"></i></button>
-        </div>
-        <div class="btn-group btn-group-sm ml-2" role="group">
-          <button class="btn btn-outline-warning" id="btnUndo" title="Undo (Ctrl+Z)"><i class="fa fa-undo"></i></button>
-          <button class="btn btn-outline-warning" id="btnRedo" title="Redo (Ctrl+Y / Shift+Z)"><i class="fa fa-repeat"></i></button>
-        </div>
-      </div>
-
+	  <!-- Download Files -->
       <div class="col-auto pb-2">
         <button class="btn btn-sm btn-success" id="btnDownloadMap"><i class="fa fa-download"></i> Download Map</button>
         <button class="btn btn-sm btn-warning" id="btnDownloadMask"><i class="fa fa-download"></i> Download Keepout Mask</button>
@@ -180,7 +186,7 @@
       <div class="card bg-dark">
         <div class="card-body p-2">
           <div class="small-note mb-2"><strong>Legend</strong></div>
-          <div class="small-note"><i class="fa fa-paint-brush"></i> Paint: sets map pixels to <code>0</code> (occupied/black)</div>
+          <div class="small-note"><i class="fa fa-paint-brush"></i> Wall: Sets map pixels to <code>0</code> (occupied/black)</div>
           <div class="small-note"><i class="fa fa-eraser"></i> Erase: map→<code>maxval</code> (free), mask→<code>255</code> (no-keepout)</div>
           <div class="small-note"><i class="fa fa-ban"></i> Keep-Out: draws black on mask (keepout)</div>
 		  <div class="spacer"></div>
@@ -241,6 +247,17 @@
 
   // Shape start point (canvas coords)
   let sx=0, sy=0;
+  
+  // Filled rectangle
+  let filledRect = false;
+  
+  $('#filledRect').on('change', function(){
+    filledRect = this.checked;
+    // clear any ghost preview when toggling fill
+    clearPreview();
+  });
+  
+  $('#filledRect').prop('checked', false);
 
   // ===== Elements =====
   const $yamlName = $('#yamlName'), $pgmName = $('#pgmName');
@@ -373,14 +390,14 @@
       startDrawing(e.offsetX, e.offsetY);
     }
   });
-  mapCanvas.addEventListener('mousemove', e=>{
+  mapCanvas.addEventListener('mousemove', e => {
     moveBrushCursor(e);
     if(panning){
       viewport.scrollLeft = panStartScrollL - (e.clientX - panStartX);
       viewport.scrollTop  = panStartScrollT  - (e.clientY - panStartY);
     } else if(drawing && shape==='freehand'){
       paintAt(e.offsetX, e.offsetY);
-    } else if(previewing && (shape==='line' || shape==='rect')){
+    } else if(previewing && (shape==='line' || shape==='rect' || shape==='measure')) {
       drawPreview(sx, sy, e.offsetX, e.offsetY);
     }
   });
@@ -398,14 +415,17 @@
     moveBrushCursor(e);
     startDrawing(x, y);
   }, {passive:false});
-  mapCanvas.addEventListener('touchmove', e=>{
+  mapCanvas.addEventListener('touchmove', e => {
     if(!pgm) return;
     e.preventDefault();
-    const t = e.touches[0], rect = mapCanvas.getBoundingClientRect();
+    const t = e.touches[0];
+    const rect = mapCanvas.getBoundingClientRect();
     const x = t.clientX - rect.left, y = t.clientY - rect.top;
     moveBrushCursor(e);
     if(drawing && shape==='freehand'){ paintAt(x, y); }
-    else if(previewing && (shape==='line' || shape==='rect')){ drawPreview(sx, sy, x, y); }
+    else if(previewing && (shape==='line' || shape==='rect' || shape==='measure')){
+      drawPreview(sx, sy, x, y);
+    }
   }, {passive:false});
   mapCanvas.addEventListener('touchend', e=>{ e.preventDefault(); endDrawing(); }, {passive:false});
   mapCanvas.addEventListener('touchcancel', e=>{ e.preventDefault(); endDrawing(); }, {passive:false});
@@ -417,14 +437,15 @@
       drawing = true;
       beginStroke();
       paintAt(cx, cy);
-    } else {
-      // line / rect: start preview
+    } else if(shape === 'line' || shape === 'rect' || shape === 'measure'){
+		// line / rect / measure: start preview
       previewing = true;
       sx = cx; sy = cy;
       clearPreview();
       drawPreview(sx, sy, cx, cy); // tiny marker
     }
   }
+  
   function endDrawing(e){
     if(shape==='freehand'){
       if(!drawing) return;
@@ -432,19 +453,29 @@
       finishStroke();
     } else if(previewing){
       previewing = false;
-      // commit line/rect
+	  // commit line/rect
       const rect = mapCanvas.getBoundingClientRect();
       let ex, ey;
       if(e && typeof e.clientX === 'number'){
         ex = e.clientX - rect.left; ey = e.clientY - rect.top;
-      } else {
-        // if touchend or mouseup without coordinates, keep last previewed pos
-        ex = lastPreviewX ?? sx; ey = lastPreviewY ?? sy;
+      } else { 
+		// if touchend or mouseup without coordinates, keep last previewed pos
+		ex = lastPreviewX ?? sx; ey = lastPreviewY ?? sy;
+      }
+      if(shape === 'measure'){
+        // keep the preview on screen until next action (comment out next line to persist it)
+		setTimeout(() => { 
+			clearPreview();	//clear it after few seconds
+		}, 5000);
+        return; // no pixel changes, no undo/redo entry
       }
       clearPreview();
       beginStroke();
       if(shape === 'line') drawThickLine(sx, sy, ex, ey);
-      else if(shape === 'rect') drawThickRect(sx, sy, ex, ey);
+      else if(shape === 'rect'){
+        if(filledRect) drawFilledRect(sx, sy, ex, ey);
+        else drawThickRect(sx, sy, ex, ey);
+      }
       finishStroke();
     }
   }
@@ -574,27 +605,117 @@
     drawThickLine(x2, y2, x1, y2); // bottom
     drawThickLine(x1, y2, x1, y1); // left
   }
+  
+  function drawFilledRect(cx1, cy1, cx2, cy2){
+    // normalized canvas rectangle
+    const x1 = Math.min(cx1, cx2), y1 = Math.min(cy1, cy2);
+    const x2 = Math.max(cx1, cx2), y2 = Math.max(cy1, cy2);
+  
+    // Outline first (thick edges) — duplicates are OK; touchedIndices prevents double-logging
+    drawThickRect(x1, y1, x2, y2);
+  
+    // Interior fill (map coords)
+    const [mx1,my1] = canvasToMap(x1, y1);
+    const [mx2,my2] = canvasToMap(x2, y2);
+    const xMin = Math.max(0, Math.min(mx1, mx2));
+    const yMin = Math.max(0, Math.min(my1, my2));
+    const xMax = Math.min(pgm.width-1,  Math.max(mx1, mx2));
+    const yMax = Math.min(pgm.height-1, Math.max(my1, my2));
+  
+    const w = pgm.width, maxval = pgm.maxval;
+  
+    // Decide values per active tool
+    const mapVal  = (tool==='paint') ? 0 : (tool==='erase' ? maxval : null);
+    const maskVal = (tool==='mask')  ? 0 : (tool==='erase' ? 255    : null);
+  
+    for(let y = yMin; y <= yMax; y++){
+      const rowBase = y * w;
+      for(let x = xMin; x <= xMax; x++){
+        const idx = rowBase + x;
+        if(mapVal  !== null) setPixelWithUndo('pgm',  pgm.pixels, idx, mapVal);
+        if(maskVal !== null) setPixelWithUndo('mask', mask,       idx, maskVal);
+      }
+    }
+  
+    redrawMap();
+    redrawMask();
+  }
+  
+  // To account for Filled pixels in Undo
+  function setPixelWithUndo(layerName, buf, idx, value){
+    if(touchedIndices && !touchedIndices.has(idx)){
+      currentStroke && currentStroke.push({ layer: layerName, idx, prev: buf[idx], next: value });
+      touchedIndices.add(idx);
+    }
+    buf[idx] = value;
+  }
 
   // ===== Preview overlay =====
   let lastPreviewX=null, lastPreviewY=null;
-  function clearPreview(){ prevCtx.clearRect(0,0,previewCanvas.width, previewCanvas.height); lastPreviewX=lastPreviewY=null; }
+
+  function clearPreview(){
+    prevCtx.clearRect(0,0,previewCanvas.width, previewCanvas.height);
+    lastPreviewX=lastPreviewY=null;
+  }
+  
+  // helper for label
+  function drawLabel(ctx, x, y, text){
+    ctx.save();
+    ctx.font = Math.max(12, Math.round(12 * zoom)) + 'px Arial';
+    ctx.textBaseline = 'bottom';
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+    ctx.fillStyle = 'white';
+    ctx.strokeText(text, x+6, y-6);
+    ctx.fillText(text, x+6, y-6);
+    ctx.restore();
+  }
+  
   function drawPreview(cx1, cy1, cx2, cy2){
     clearPreview();
     lastPreviewX=cx2; lastPreviewY=cy2;
+  
     prevCtx.save();
-    // color hints per target
-    if(tool==='mask'){ prevCtx.strokeStyle='rgba(255,0,0,0.7)'; }
-    else if(tool==='erase'){ prevCtx.strokeStyle='rgba(255,255,255,0.8)'; }
-    else { prevCtx.strokeStyle='rgba(0,0,0,0.8)'; }
     prevCtx.lineWidth = Math.max(1, Math.round(brush * zoom));
     prevCtx.lineCap = 'round';
+  
     if(shape==='line'){
+      prevCtx.strokeStyle = (tool==='mask') ? 'rgba(255,0,0,0.7)' :
+                             (tool==='erase') ? 'rgba(255,255,255,0.85)' :
+                                                'rgba(0,0,0,0.85)';
       prevCtx.beginPath(); prevCtx.moveTo(cx1, cy1); prevCtx.lineTo(cx2, cy2); prevCtx.stroke();
-    }else if(shape==='rect'){
+    } else if(shape==='rect'){
+      prevCtx.strokeStyle = (tool==='mask') ? 'rgba(255,0,0,0.7)' :
+                             (tool==='erase') ? 'rgba(255,255,255,0.85)' :
+                                                'rgba(0,0,0,0.85)';
       const x = Math.min(cx1,cx2), y = Math.min(cy1,cy2);
       const w = Math.abs(cx2-cx1), h = Math.abs(cy2-cy1);
+      if(filledRect){
+        // show a translucent fill preview
+        prevCtx.fillStyle = (tool==='mask') ? 'rgba(255,0,0,0.25)' :
+                            (tool==='erase') ? 'rgba(255,255,255,0.25)' :
+                                               'rgba(0,0,0,0.25)';
+        prevCtx.fillRect(x, y, w, h);
+      }
       prevCtx.strokeRect(x, y, w, h);
+    } else if(shape==='measure'){
+      // measuring: thin line + label (independent of brush)
+      const lw = Math.max(1, Math.round(2 * zoom));
+      prevCtx.lineWidth = lw;
+      prevCtx.strokeStyle = 'rgba(0,150,255,0.9)';
+      prevCtx.beginPath(); prevCtx.moveTo(cx1, cy1); prevCtx.lineTo(cx2, cy2); prevCtx.stroke();
+      // distance
+      const [mx1,my1] = canvasToMap(cx1, cy1);
+      const [mx2,my2] = canvasToMap(cx2, cy2);
+      const dx = mx2-mx1, dy = my2-my1;
+      const pixDist = Math.sqrt(dx*dx + dy*dy);
+      const res = (yamlObj && typeof yamlObj.resolution === 'number') ? yamlObj.resolution : 0.05; // meters/pixel
+      const meters = pixDist * res;
+      const feet = meters * 3.28084;
+      const txt = `${meters.toFixed(3)} m  (${feet.toFixed(2)} ft)`;
+      drawLabel(prevCtx, cx2, cy2, txt);
     }
+  
     prevCtx.restore();
   }
 

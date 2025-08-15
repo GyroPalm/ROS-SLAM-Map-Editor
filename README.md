@@ -21,6 +21,8 @@ The map editor can be thought of as a specialized paint tool, allowing users to 
 - [x] Live-Preview Overlay for Brushing or Drawing Lines/Rectangles
 - [x] Multi-level Undo and Redo Capabilities
 - [x] (Hold Spacebar + Drag Mouse) to Pan the Map
+- [x] Option to Draw Filled Rectangles
+- [x] Drag to Take Measurements Dynamically from a Map
 - [x] Download Separate Map and Keepout Mask (yaml and PGM files)
 
 Future Work:
@@ -33,7 +35,7 @@ Future Work:
 TBD
 
 ## Credit and License
-This tool is created by Dominick Lee as part of GyroPalm's OmniBot V2 AMR product. By making this tool available to the open-source community, the author demonstrates commitment to the principles of collaboration and knowledge-sharing that are at the heart of the open-source community and ROS2 ecosystem. If you are interested in ROS2 gesture-based robotic control, collaboration based on ROS2 robots, or would like to support the author's work, please feel free to reach out at dlee(@)gyropalm.com
+This tool is created by Dominick Lee as part of GyroPalm's OmniBot V2 AMR product. By making this tool available to the open-source community, the author demonstrates commitment to the principles of collaboration and innovation that are at the heart of the open-source community and ROS2 ecosystem. If you are interested in ROS2 gesture-based robotic control, collaboration based on ROS2 robots, have a commercial use-case, or would like to support the author's work, please feel free to reach out at dlee(@)gyropalm.com
 
 If you choose to use this tool in your work or research, please refer to the MIT license file provided. Please cite the work as follows:
 > Lee, Dominick. (2025). ROS SLAM Map Editor [Computer software]. GyroPalm, LLC. https://github.com/GyroPalm/ROS-SLAM-Map-Editor
