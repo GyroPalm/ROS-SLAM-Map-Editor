@@ -71,6 +71,12 @@
 	#yamlPreview{
       color: #26a7bb !important;
 	}
+	/* Prevent selection of UI panels */
+	.noselect {
+	  -webkit-user-select: none; /* Safari */
+	  user-select: none; /* Non-prefixed version, 
+							supported by all other modern browsers */
+	}
   </style>
 </head>
 <body>
@@ -165,7 +171,7 @@
 <div class="container-fluid mt-3">
   <div class="row">
     <div class="col-lg-3 mb-3">
-      <div id="drop" class="dropzone">
+      <div id="drop" class="dropzone noselect">
         <div><strong>Drag & drop</strong> your <code>.yaml</code> and <code>.pgm</code> here</div>
         <div class="small-note">…or use the buttons above</div>
       </div>
@@ -185,7 +191,7 @@
       </div>
       <div class="spacer"></div>
       <div class="card bg-dark">
-        <div class="card-body p-2">
+        <div class="card-body p-2 noselect">
           <div class="small-note mb-2"><strong>Legend</strong></div>
           <div class="small-note"><i class="fa fa-paint-brush"></i> Wall: Sets map pixels to <code>0</code> (occupied/black)</div>
           <div class="small-note"><i class="fa fa-eraser"></i> Erase: map→<code>maxval</code> (free), mask→<code>255</code> (no-keepout)</div>
