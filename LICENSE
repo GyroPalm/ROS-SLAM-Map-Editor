@@ -1,8 +1,15 @@
 MIT License
 
-Copyright (c) 2025 GyroPalm
+Copyright (c) 2025 GyroPalm, LLC (original work)
+  - Original project: https://github.com/GyroPalm/ROS-SLAM-Map-Editor
+  - Original author: Dominick Lee (GyroPalm)
 
-Lee, Dominick. (2025). ROS SLAM Map Editor [Computer software]. GyroPalm, LLC. https://github.com/GyroPalm/ROS-SLAM-Map-Editor
+Copyright (c) 2025 MiftahulSN (modifications)
+  - Fork and modifications: https://github.com/MiftahulSN/slam-map-editor
+
+This project is a fork of the ROS SLAM Map Editor by Dominick Lee / GyroPalm, LLC.
+The original source code is available at the URL above and is licensed under the MIT License.
+Modifications made by MiftahulSN are also distributed under the same MIT License terms.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

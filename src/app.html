@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="description" content="A web-based map editor for quick editing and saving of ROS and ROS2 SLAM maps, keep-out zones, and semantic navigation filters.">
+  <meta name="keywords" content="online, web, ros, ros2, SLAM, map, editor, robotics, robots, responsive, pgm, semantic, nav2">
+  <meta name="author" content="Dominick Lee, MiftahulSN">
+  <title>SLAM Map Editor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="toolbar p-2">
+  <div class="container-fluid">
+    <div class="form-row align-items-center">
+      <div class="col-auto pb-2">
+        <input type="file" id="yamlInput" accept=".yaml,.yml" class="d-none">
+        <button class="btn btn-sm btn-outline-info" id="btnLoadYaml"><i class="fa fa-file-text-o"></i> Load YAML</button>
+        <span id="yamlName" class="small-note ml-2">No YAML</span>
+      </div>
+      <div class="col-auto pb-2">
+        <input type="file" id="pgmInput" accept=".pgm" class="d-none">
+        <button class="btn btn-sm btn-outline-info" id="btnLoadPgm"><i class="fa fa-picture-o"></i> Load PGM</button>
+        <span id="pgmName" class="small-note ml-2">No PGM</span>
+        <span id="semanticMaskName" class="small-note ml-2">No Semantic Mask</span>
+      </div>
+
+      <!-- Zoom / Undo-Redo -->
+      <div class="col-auto pb-2">
+        <div class="btn-group btn-group-sm" role="group" aria-label="Zoom">
+          <button class="btn btn-outline-light" id="zoomOut" title="Zoom Out"><i class="fa fa-search-minus"></i></button>
+          <button class="btn btn-outline-light" id="zoomIn" title="Zoom In"><i class="fa fa-search-plus"></i></button>
+          <button class="btn btn-outline-light" id="zoomReset" title="Reset Zoom"><i class="fa fa-compress"></i></button>
+        </div>
+        <div class="btn-group btn-group-sm ml-2" role="group">
+          <button class="btn btn-outline-warning" id="btnUndo" title="Undo (Ctrl+Z)"><i class="fa fa-undo"></i></button>
+          <button class="btn btn-outline-warning" id="btnRedo" title="Redo (Ctrl+Y)"><i class="fa fa-repeat"></i></button>
+        </div>
+      </div>
+
+      <!-- Target (which layer / action) -->
+      <div class="col-auto pb-2">
+        <div class="btn-group btn-group-sm" role="group" aria-label="Tools">
+          <button class="btn btn-outline-light tool-btn" data-tool="paint" title="Paint Walls (occupied)"><i class="fa fa-paint-brush"></i> Wall</button>
+          <button class="btn btn-outline-light tool-btn" data-tool="erase" title="Erase Map + Semantic"><i class="fa fa-eraser"></i> Erase</button>
+          <button class="btn btn-outline-light tool-btn" data-tool="unscan" title="Mark as unknown"><i class="fa fa-minus-square-o"></i> Un-Scan</button>
+          <button class="btn btn-outline-light tool-btn" data-tool="mask" title="Draw Keepout"><i class="fa fa-ban"></i> Keep-Out</button>
+          <button class="btn btn-outline-light tool-btn" data-tool="speed" title="Draw Speed Zone"><i class="fa fa-tachometer"></i> Speed</button>
+          <button class="btn btn-outline-light tool-btn" data-tool="passable" title="Draw Passable Zone"><i class="fa fa-sort-amount-asc"></i> Passable</button>
+          <button class="btn btn-outline-light tool-btn" data-tool="guidance" title="Draw Guidance Zone"><i class="fa fa-compass"></i> Guidance</button>
+        </div>
+      </div>
+
+      <!-- Shape Group -->
+      <div class="col-auto pb-2">
+        <div class="btn-group btn-group-sm" role="group" aria-label="Shape">
+          <button class="btn btn-outline-light shape-btn" data-shape="freehand" title="Freehand"><i class="fa fa-pencil"></i></button>
+          <button class="btn btn-outline-light shape-btn" data-shape="line" title="Line"><i class="fa fa-minus"></i></button>
+          <button class="btn btn-outline-light shape-btn" data-shape="rect" title="Rectangle"><i class="fa fa-square-o"></i></button>
+          <button class="btn btn-outline-light shape-btn" data-shape="measure" title="Measure Distance"><i class="fa fa-arrows-h"></i></button>
+        </div>
+      </div>
+
+      <!-- Brush -->
+      <div class="col-auto pb-2">
+        <label class="mb-0 mr-2"><i class="fa fa-dot-circle-o"></i> Brush</label>
+        <input type="range" id="brushSize" min="1" max="60" value="8">
+        <span id="brushLabel" class="small-note">8 px</span>
+      </div>
+
+      <!-- Speed % -->
+      <div class="col-auto pb-2 speed-control" id="speedControl">
+        <label class="mb-0 mr-2"><i class="fa fa-tachometer"></i> Speed</label>
+        <input type="range" id="speedPercent" min="1" max="100" value="50">
+        <span id="speedLabel" class="small-note">50%</span>
+      </div>
+
+      <!-- Display toggles -->
+      <div class="col-auto pb-2">
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="checkbox" id="showKeepout" checked>
+          <label class="form-check-label" for="showKeepout"><span style="color:#be3232">Keepout</span></label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="checkbox" id="showSpeed" checked>
+          <label class="form-check-label" for="showSpeed"><span style="color:#beaa28">Speed</span></label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="checkbox" id="showPassable" checked>
+          <label class="form-check-label" for="showPassable"><span style="color:#3278be">Passable</span></label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="checkbox" id="showGuidance" checked>
+          <label class="form-check-label" for="showGuidance"><span style="color:#28963c">Guidance</span></label>
+        </div>
+      </div>
+
+      <div class="col-auto pb-2">
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="checkbox" id="invertDisplay">
+          <label class="form-check-label" for="invertDisplay">Invert</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="checkbox" id="autoLevels" checked>
+          <label class="form-check-label" for="autoLevels">Auto-levels</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="checkbox" id="filledRect">
+          <label class="form-check-label" for="filledRect">Filled</label>
+        </div>
+      </div>
+
+      <!-- Download Files -->
+      <div class="col-auto pb-2">
+        <button class="btn btn-sm btn-success" id="btnDownloadMap"><i class="fa fa-download"></i> Download Map</button>
+        <div class="btn-group btn-group-sm">
+          <button class="btn btn-warning" id="btnDownloadSemantic"><i class="fa fa-download"></i> Download Semantic Mask</button>
+          <button class="btn btn-warning dropdown-toggle dropdown-toggle-split" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <span class="sr-only">Toggle Dropdown</span>
+          </button>
+          <div class="dropdown-menu" style="background:#2a2a2a;border-color:#555;">
+            <a class="dropdown-item text-light" href="#" id="dlFilterAll"><i class="fa fa-layer-group"></i> All Filters (semantic mask)</a>
+            <div class="dropdown-divider" style="border-color:#444;"></div>
+            <a class="dropdown-item" href="#" id="dlFilterKeepout" style="color:#be3232;"><i class="fa fa-ban"></i> Keepout Only</a>
+            <a class="dropdown-item" href="#" id="dlFilterSpeed" style="color:#beaa28;"><i class="fa fa-tachometer"></i> Speed Only</a>
+            <a class="dropdown-item" href="#" id="dlFilterPassable" style="color:#3278be;"><i class="fa fa-sort-amount-asc"></i> Passable Only</a>
+            <a class="dropdown-item" href="#" id="dlFilterGuidance" style="color:#28963c;"><i class="fa fa-compass"></i> Guidance Only</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="col small-note ml-auto text-right pb-2">
+        Tip: Choose a target (Paint/Erase/Keep-Out/Speed/Passable/Guidance), then a shape (Freehand/Line/Rect). Spacebar+Drag to pan. Shift+Scroll to zoom.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid mt-3">
+  <div class="row">
+    <div class="col-lg-3 mb-3">
+      <div id="drop" class="dropzone noselect">
+        <div><strong>Drag &amp; drop</strong> your <code>.yaml</code> and <code>.pgm</code> here</div>
+        <div class="small-note">Supports base maps, keepout masks, and semantic masks</div>
+      </div>
+      <div class="spacer"></div>
+      <div class="card bg-dark">
+        <div class="card-body p-2">
+          <div class="small-note">YAML preview</div>
+          <pre id="yamlPreview" class="mb-0" style="max-height:240px; overflow:auto;"></pre>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <div class="card bg-dark">
+        <div class="card-body p-2">
+          <div class="small-note">Debug</div>
+          <div class="small-note" id="dbgInfo">&mdash;</div>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <div class="card bg-dark">
+        <div class="card-body p-2 noselect">
+          <div class="small-note mb-2"><strong>Legend</strong></div>
+          <div class="small-note"><i class="fa fa-paint-brush"></i> Wall: map pixels to <code>0</code> (occupied/black)</div>
+          <div class="small-note"><i class="fa fa-eraser"></i> Erase: map&rarr;<code>maxval</code> (free), semantic&rarr;<code>255</code> (none)</div>
+          <div class="small-note"><i class="fa fa-minus-square-o"></i> &nbsp;Un-Scan: map pixels to light gray (unknown)</div>
+          <div class="spacer"></div>
+          <div class="small-note"><span style="color:#be3232">&blacksquare;</span> Keep-Out: impassable zone (PGM&nbsp;0)</div>
+          <div class="small-note"><span style="color:#beaa28">&blacksquare;</span> Speed: speed limit zone (PGM&nbsp;1&ndash;100&nbsp;=&nbsp;speed%)</div>
+          <div class="small-note"><span style="color:#3278be">&blacksquare;</span> Passable: obstacle removal zone (PGM&nbsp;128)</div>
+          <div class="small-note"><span style="color:#28963c">&blacksquare;</span> Guidance: preferred path zone (PGM&nbsp;160)</div>
+          <div class="spacer"></div>
+          <div class="small-note mt-3"><i>Based on GyroPalm ROS SLAM Map Editor</i></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-9">
+      <div id="viewport">
+        <div id="canvasWrap">
+          <div class="overlay-label">Map</div>
+          <canvas id="mapCanvas"></canvas>
+          <canvas id="maskCanvas"></canvas>
+          <canvas id="previewCanvas"></canvas>
+          <div id="brushCursor"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+<script src="js/pgm.js"></script>
+<script src="js/semantic.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

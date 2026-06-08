@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<meta name="description" content="A web-based map editor for quick editing and saving of ROS and ROS2 SLAM maps and keep-out zones.">
-	<meta name="keywords" content="online, web, ros, ros2, SLAM, map,, editor, robotics, robots, responsive, pgm">
-	<meta name="author" content="Dominick Lee">
-    <title>ROS SLAM Map Editor</title>
+	<meta name="description" content="A web-based map editor for quick editing and saving of SLAM maps with semantic navigation filters for Nav2.">
+	<meta name="keywords" content="online, web, ros, ros2, SLAM, map, editor, robotics, robots, responsive, pgm, semantic, nav2, keepout, speed, passable, guidance">
+	<meta name="author" content="Dominick Lee, MiftahulSN">
+    <title>SLAM Map Editor</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
@@ -56,11 +56,11 @@
 
     <!-- Hero Section -->
     <div class="hero">
-        <h1 class="display-4 font-weight-bold">ROS SLAM Map Editor</h1>
-        <p class="lead">A web-based map editor for quick editing of ROS and ROS2 SLAM maps</p>
-        <a href="editor.html" class="btn btn-custom mt-3"><i class="fas fa-edit"></i> Launch Editor</a>
+        <h1 class="display-4 font-weight-bold">SLAM Map Editor</h1>
+        <p class="lead">A web-based map editor for SLAM maps with semantic Nav2 filter support</p>
+        <a href="app.html" class="btn btn-custom mt-3"><i class="fas fa-edit"></i> Launch Editor</a>
         <div>
-            <img src="img/screenshot-main.png" alt="ROS SLAM Map Editor Screenshot">
+            <img src="../assets/app.png" alt="SLAM Map Editor Screenshot">
         </div>
     </div>
 
@@ -68,19 +68,19 @@
     <div class="container mt-5">
         <h2 class="mb-4 text-center">Overview</h2>
         <p>
-            The ROS SLAM Map Editor is a hassle-free, open-source tool that allows engineers and researchers to refine their ROS/ROS2 SLAM maps directly in the browser — no external image editors required.
-            It’s designed for quick, precise adjustments to maps created by packages like 
+            The SLAM Map Editor is a hassle-free, open-source tool that allows engineers and researchers to refine their SLAM maps directly in the browser — no external image editors required.
+            It's designed for quick, precise adjustments to maps created by packages like 
             <a href="https://github.com/SteveMacenski/slam_toolbox" target="_blank">slam_toolbox</a>.
         </p>
         <p>
-            Easily modify walls, obstacles, keep-out zones, and other environmental details for a more accurate representation of your environment.
+            Easily modify walls, obstacles, keep-out zones, speed limits, passable zones, guidance paths, and other environmental details. Generates a single semantic PGM mask for Nav2 costmap filters.
         </p>
     </div>
 	
     <!-- Demo Video -->
     <div class="container mt-5">
         <h2 class="mb-4 text-center">Demo Video</h2>
-		<style>.embed-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; } .embed-container iframe, .embed-container object, .embed-container embed { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }</style><div class='embed-container'><iframe src='https://www.youtube.com/embed//QZlPkAjfvck' frameborder='0' allowfullscreen></iframe></div>
+		<style>.embed-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; } .embed-container iframe, .embed-container object, .embed-container embed { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }</style><div class='embed-container'><iframe src='https://www.youtube.com/embed/QZlPkAjfvck' frameborder='0' allowfullscreen></iframe></div>
     </div>
 
     <!-- Features -->
@@ -100,7 +100,7 @@
             <div class="col-md-4 text-center mb-4">
                 <i class="fa fa-download"></i>
                 <h5>Easy Export</h5>
-                <p class="lead">Download updated PGM and YAML files instantly, with separate keep-out masks.</p>
+                <p class="lead">Download updated map and semantic PGM+YAML files with keepout, speed, passable, and guidance zones.</p>
             </div>
         </div>
     </div>
@@ -111,20 +111,20 @@
 		<hr />
         <ol>
             <li>Drag & Drop your <code>map.yaml</code> and <code>map.pgm</code> into the editor.</li>
-            <li>Choose your edit mode: Wall, Erase, Keep-Out, Un-Scan, Line, Rectangle, or Measure.</li>
+            <li>Choose your edit mode: Wall, Erase, Un-Scan, Keep-Out, Speed, Passable, or Guidance.</li>
             <li>Make your edits with zoom, pan, and brush size controls.</li>
             <li>Download your updated map files when done.</li>
         </ol>
         <div class="text-center mt-5">
-            <a href="editor.html" class="btn btn-primary btn-lg"><i class="fas fa-play"></i> Try It Now</a>
-            <a href="https://github.com/GyroPalm/ROS-SLAM-Map-Editor" class="btn btn-secondary btn-lg"><i class="fab fa-github"></i> GitHub Repo</a>
+            <a href="app.html" class="btn btn-primary btn-lg"><i class="fas fa-play"></i> Try It Now</a>
+            <a href="https://github.com/MiftahulSN/slam-map-editor" class="btn btn-secondary btn-lg"><i class="fab fa-github"></i> GitHub Repo</a>
         </div>
     </div>
 
     <!-- Footer -->
     <footer>
         <p>
-            Created by <a href="https://dominicklee.com" target="_blank">Dominick Lee</a> for <a href="https://vimpaact.gyropalm.com/" target="_blank">GyroPalm VIMPAACT</a> | &nbsp;&copy; 2025 by GyroPalm, LLC.
+            Fork of <a href="https://github.com/GyroPalm/ROS-SLAM-Map-Editor" target="_blank">ROS SLAM Map Editor</a> by <a href="https://dominicklee.com" target="_blank">Dominick Lee</a> | Modified by <a href="https://github.com/MiftahulSN" target="_blank">MiftahulSN</a>
         </p>
     </footer>
 

@@ -1,0 +1,60 @@
+body{background:#111;color:#eee}
+.toolbar{position:sticky;top:0;z-index:10;background:#1b1b1b;border-bottom:1px solid #333}
+.overlay-label{position:absolute; top:8px; left:8px; background:rgba(0,0,0,.5); padding:4px 8px; border-radius:4px; font-size:12px}
+.dropzone{border:2px dashed #555; border-radius:6px; padding:12px; text-align:center; color:#bbb}
+.dropzone.drag{background:#222; color:#fff; border-color:#888}
+.small-note{font-size:12px; color:#aaa}
+.spacer{height:12px}
+.tool-btn.active,.shape-btn.active{outline:2px solid #17a2b8}
+
+#viewport{
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 150px);
+  overflow: auto;
+  border: 1px solid #333;
+  background: #000;
+  cursor: default;
+}
+#viewport.panning{ cursor: grab; }
+#viewport.panning.dragging{ cursor: grabbing; }
+
+#canvasWrap{ position:relative; display:inline-block; }
+
+#mapCanvas{
+  image-rendering: pixelated; image-rendering: crisp-edges;
+  border:1px solid #444;
+  background: conic-gradient(#222 0 25%, #111 0 50%, #222 0 75%, #111 0 100%) 0 0/16px 16px;
+}
+#maskCanvas{
+  image-rendering: pixelated; image-rendering: crisp-edges;
+  border:1px solid #444;
+  background: transparent !important;
+  position:absolute; left:0; top:0; z-index:2;
+  pointer-events: none;
+}
+#previewCanvas{
+  image-rendering: pixelated; image-rendering: crisp-edges;
+  position:absolute; left:0; top:0; z-index:3;
+  pointer-events: none;
+  background: transparent !important;
+}
+#brushCursor{
+  position: absolute;
+  pointer-events: none;
+  border: 1px solid rgba(200,200,200,0.9);
+  border-radius: 50%;
+  box-sizing: border-box;
+  z-index: 4;
+  display: none;
+}
+#yamlPreview{
+  color: #26a7bb !important;
+}
+.noselect {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.speed-control { opacity: 0.4; pointer-events: none; transition: opacity 0.2s; }
+.speed-control.active { opacity: 1; pointer-events: auto; }
