@@ -89,7 +89,7 @@
     .ribbon-tab[aria-selected="true"]{background:#303338;color:white;border-bottom-color:#54bce8}
     .ribbon-tab:focus-visible,.ribbon button:focus-visible{outline:2px solid #8bd5ff;outline-offset:-2px}
     .ribbon-panel{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:stretch;min-height:78px;padding:8px 12px;gap:0;overflow-x:auto}
-    .ribbon-panel[hidden]{display:none!important}
+    .ribbon-panel[hidden],.ribbon-group[hidden]{display:none!important}
     .ribbon-group{display:flex;flex-direction:column;justify-content:space-between;border-right:1px solid #484b50;padding:2px 18px;flex-shrink:0;gap:8px}
     .ribbon-group:last-child{border-right:0}
     .ribbon-controls{display:flex;align-items:center;gap:10px;flex:1}
@@ -118,15 +118,18 @@
   </style>
 </head>
 <body>
-<div class="toolbar ribbon noselect"><div class="ribbon-title">GyroPalm <span>SLAM Map Editor</span></div><div class="ribbon-tabs" role="tablist" aria-label="Editor ribbon"><button type="button" class="ribbon-tab" id="tab-file" aria-keyshortcuts="Shift+F" title="File (Shift + F)" role="tab" aria-selected="false" aria-controls="panel-file" tabindex="-1">File</button><button type="button" class="ribbon-tab" id="tab-home" aria-keyshortcuts="Shift+H" title="Home (Shift + H)" role="tab" aria-selected="true" aria-controls="panel-home" tabindex="0">Home</button><button type="button" class="ribbon-tab" id="tab-edit" aria-keyshortcuts="Shift+E" title="Edit (Shift + E)" role="tab" aria-selected="false" aria-controls="panel-edit" tabindex="-1">Edit</button><button type="button" class="ribbon-tab" id="tab-view" aria-keyshortcuts="Shift+V" title="View (Shift + V)" role="tab" aria-selected="false" aria-controls="panel-view" tabindex="-1">View</button><button type="button" class="ribbon-tab" id="tab-help" role="tab" aria-selected="false" aria-controls="panel-help" tabindex="-1">Help</button></div><div class="ribbon-panel" id="panel-file" role="tabpanel" aria-labelledby="tab-file" hidden><div class="ribbon-group"><div class="ribbon-controls"><div class="ribbon-stack"><input type="file" id="yamlInput" accept=".yaml,.yml" class="d-none"><input type="file" id="pgmInput" accept=".pgm" class="d-none"><button class="btn btn-sm btn-outline-info" id="btnLoadYaml"><i class="fa fa-file-text-o"></i> Load YAML</button><button class="btn btn-sm btn-outline-info" id="btnLoadPgm"><i class="fa fa-picture-o"></i> Load PGM</button></div></div><div class="ribbon-caption">Open map</div></div><div class="ribbon-group"><div class="ribbon-controls"><div class="ribbon-stack"><button class="btn btn-sm btn-success" id="btnDownloadMap"><i class="fa fa-download"></i> Download Map ZIP</button><button class="btn btn-sm btn-warning" id="btnDownloadMask"><i class="fa fa-download"></i> Download Keepout ZIP</button></div></div><div class="ribbon-caption">Export map</div></div><div class="ribbon-group"><div class="ribbon-controls"><div class="ribbon-file-list"><span id="yamlName" class="small-note ml-2">No YAML</span><span id="pgmName" class="small-note ml-2">No PGM</span><span id="maskName" class="small-note ml-2">No Keepout</span></div></div><div class="ribbon-caption">Loaded files</div></div></div><div class="ribbon-panel" id="panel-home" role="tabpanel" aria-labelledby="tab-home"><div class="ribbon-group"><div class="ribbon-controls"><div class="btn-group btn-group-sm" role="group" aria-label="Tools">
+<div class="toolbar ribbon noselect"><div class="ribbon-title">GyroPalm <span>SLAM Map Editor</span></div><div class="ribbon-tabs" role="tablist" aria-label="Editor ribbon"><button type="button" class="ribbon-tab" id="tab-file" aria-keyshortcuts="Shift+F" title="File (Shift + F)" role="tab" aria-selected="false" aria-controls="panel-file" tabindex="-1">File</button><button type="button" class="ribbon-tab" id="tab-home" aria-keyshortcuts="Shift+H" title="Home (Shift + H)" role="tab" aria-selected="true" aria-controls="panel-home" tabindex="0">Home</button><button type="button" class="ribbon-tab" id="tab-edit" aria-keyshortcuts="Shift+E" title="Edit (Shift + E)" role="tab" aria-selected="false" aria-controls="panel-edit" tabindex="-1">Edit</button><button type="button" class="ribbon-tab" id="tab-view" aria-keyshortcuts="Shift+V" title="View (Shift + V)" role="tab" aria-selected="false" aria-controls="panel-view" tabindex="-1">View</button><button type="button" class="ribbon-tab" id="tab-help" role="tab" aria-selected="false" aria-controls="panel-help" tabindex="-1">Help</button></div><div class="ribbon-panel" id="panel-file" role="tabpanel" aria-labelledby="tab-file" hidden><div class="ribbon-group"><div class="ribbon-controls"><div class="ribbon-stack"><input type="file" id="yamlInput" accept=".yaml,.yml" class="d-none"><input type="file" id="pgmInput" accept=".pgm" class="d-none"><button class="btn btn-sm btn-outline-info" id="btnLoadYaml"><i class="fa fa-file-text-o"></i> Load YAML</button><button class="btn btn-sm btn-outline-info" id="btnLoadPgm"><i class="fa fa-picture-o"></i> Load PGM</button></div></div><div class="ribbon-caption">Open map</div></div><div class="ribbon-group"><div class="ribbon-controls"><div class="ribbon-stack"><button type="button" class="btn btn-sm btn-outline-info" id="btnDownloadFull"><i class="fa fa-file-archive-o"></i> Download Full Map ZIP</button><button class="btn btn-sm btn-success" id="btnDownloadMap" title="Download map PGM and YAML. Allow multiple downloads if your browser asks."><i class="fa fa-download"></i> Download Map</button><button class="btn btn-sm btn-warning" id="btnDownloadMask" title="Download keepout PGM and YAML using the map name plus _keepout. Allow multiple downloads if your browser asks."><i class="fa fa-download"></i> Download Keepout</button></div></div><div class="ribbon-caption">Export map</div></div><div class="ribbon-group"><div class="ribbon-controls"><div class="ribbon-file-list"><span id="yamlName" class="small-note ml-2">No YAML</span><span id="pgmName" class="small-note ml-2">No PGM</span><span id="maskName" class="small-note ml-2">No Keepout</span></div></div><div class="ribbon-caption">Loaded files</div></div></div><div class="ribbon-panel" id="panel-home" role="tabpanel" aria-labelledby="tab-home"><div class="ribbon-group"><div class="ribbon-controls"><div class="btn-group btn-group-sm" role="group" aria-label="Tools">
           <button class="btn btn-outline-light tool-btn" data-tool="paint" title="Paint Walls (occupied)"><i class="fa fa-paint-brush"></i> Wall</button>
-          <button class="btn btn-outline-light tool-btn" data-tool="erase" title="Erase Map + Keepout"><i class="fa fa-eraser"></i> Erase</button>
+          <button class="btn btn-outline-light tool-btn" data-tool="erase" title="Erase the layers selected in Options"><i class="fa fa-eraser"></i> Erase</button>
 		  <button class="btn btn-outline-light tool-btn" data-tool="unscan" title="Mark as unknown (un-scanned)"><i class="fa fa-minus-square-o"></i> Un-Scan</button>
           <button class="btn btn-outline-light tool-btn" data-tool="mask" title="Draw Keepout Mask"><i class="fa fa-ban"></i> Keep-Out</button>
         </div></div><div class="ribbon-caption">Layers</div></div><div class="ribbon-group"><div class="ribbon-controls"><div class="btn-group btn-group-sm ml-2" role="group">
           <button class="btn btn-outline-warning" id="btnUndo" title="Undo (Ctrl+Z)"><i class="fa fa-undo"></i> Undo</button>
           <button class="btn btn-outline-warning" id="btnRedo" title="Redo (Ctrl+Y / Shift+Z)"><i class="fa fa-repeat"></i> Redo</button>
-        </div></div><div class="ribbon-caption">History</div></div></div><div class="ribbon-panel" id="panel-edit" role="tabpanel" aria-labelledby="tab-edit" hidden><div class="ribbon-group"><div class="ribbon-controls"><div class="btn-group btn-group-sm" role="group" aria-label="Shape">
+        </div></div><div class="ribbon-caption">History</div></div><div class="ribbon-group" id="eraseOptions" hidden><div class="ribbon-controls">
+<div class="form-check form-check-inline"><input type="checkbox" class="form-check-input" id="eraseMap" checked><label class="form-check-label" for="eraseMap">Erase Map</label></div>
+<div class="form-check form-check-inline"><input type="checkbox" class="form-check-input" id="eraseKeepout" checked><label class="form-check-label" for="eraseKeepout">Erase Keepout</label></div>
+</div><div class="ribbon-caption">Options</div></div></div><div class="ribbon-panel" id="panel-edit" role="tabpanel" aria-labelledby="tab-edit" hidden><div class="ribbon-group"><div class="ribbon-controls"><div class="btn-group btn-group-sm" role="group" aria-label="Shape">
           <button class="btn btn-outline-light shape-btn" data-shape="freehand" title="Freehand"><i class="fa fa-pencil"></i> Freehand</button>
           <button class="btn btn-outline-light shape-btn" data-shape="line" title="Line"><i class="fa fa-minus"></i> Line</button>
           <button class="btn btn-outline-light shape-btn" data-shape="rect" title="Rectangle"><i class="fa fa-square-o"></i> Rectangle</button>
@@ -181,7 +184,7 @@
         <div class="card-body p-2 noselect">
           <div class="small-note mb-2"><strong>Legend</strong></div>
           <div class="small-note"><i class="fa fa-paint-brush"></i> Wall: Sets map pixels to <code>0</code> (occupied/black)</div>
-          <div class="small-note"><i class="fa fa-eraser"></i> Erase: map→<code>maxval</code> (free), mask→<code>255</code> (no-keepout)</div>
+          <div class="small-note"><i class="fa fa-eraser"></i> Erase selected layers: map→<code>maxval</code> (free), mask→<code>255</code> (no-keepout)</div>
 		  <div class="small-note"><i class="fa fa-minus-square-o"></i> &nbsp;Un-Scan: Sets map pixels to light gray (unknown)</div>
           <div class="small-note"><i class="fa fa-ban"></i> &nbsp;Keep-Out: Draws black on mask (keepout)</div>
 		  <div class="spacer"></div>
@@ -223,7 +226,7 @@
   let brush = 8;
   let zoom = 1, ZMIN=0.25, ZMAX=8, ZSTEP=1.25;
   
-  let lastMapExportName = null, lastMaskExportName = null;
+  let lastMapExportName = null;
   let maskName = 'No Keepout';      // track which mask file is loaded
   
   // filename helpers
@@ -296,8 +299,17 @@
   $('.tool-btn').on('click', function(){
     $('.tool-btn').removeClass('active'); $(this).addClass('active');
     tool = $(this).data('tool');
+    updateEraseOptions();
   });
   $('.tool-btn[data-tool="paint"]').addClass('active');
+  function updateEraseOptions(){
+    document.getElementById('eraseOptions').hidden = tool !== 'erase';
+    sizeViewport();
+  }
+  function eraseEnabled(layer){
+    return document.getElementById(layer === 'pgm' ? 'eraseMap' : 'eraseKeepout').checked;
+  }
+  $('#eraseMap, #eraseKeepout').on('change', () => clearPreview());
 
   $('.shape-btn').on('click', function(){
     $('.shape-btn').removeClass('active'); $(this).addClass('active');
@@ -668,8 +680,8 @@
       paintBuffer('pgm', pgm.pixels, w, h, mx, my, rad, 0);
       redrawMap();
     } else if(tool === 'erase'){
-      paintBuffer('pgm', pgm.pixels, w, h, mx, my, rad, maxval);
-      paintBuffer('mask', mask, w, h, mx, my, rad, 255);
+      if(eraseEnabled('pgm')) paintBuffer('pgm', pgm.pixels, w, h, mx, my, rad, maxval);
+      if(eraseEnabled('mask')) paintBuffer('mask', mask, w, h, mx, my, rad, 255);
       redrawMap(); redrawMask();
     } else if(tool === 'unscan'){
       paintBuffer('pgm', pgm.pixels, w, h, mx, my, rad, getUnknownVal());
@@ -685,11 +697,7 @@
         const dx = x - mx, dy = y - my;
         if(dx*dx + dy*dy <= rad*rad){
           const idx = y*w + x;
-          if(touchedIndices && !touchedIndices.has(idx)){
-            currentStroke && currentStroke.push({layer: layerName, idx, prev: buf[idx], next: value});
-            touchedIndices && touchedIndices.add(idx);
-          }
-          buf[idx] = value;
+          setPixelWithUndo(layerName, buf, idx, value);
         }
       }
     }
@@ -717,8 +725,10 @@
     const drawPoint = (mx,my)=>{
       if(tool==='paint')      paintBuffer('pgm', pgm.pixels, w,h, mx,my, rad, 0);
       else if(tool==='mask')  paintBuffer('mask', mask,       w,h, mx,my, rad, 0);
-      else if(tool==='erase'){paintBuffer('pgm', pgm.pixels,  w,h, mx,my, rad, maxval);
-                               paintBuffer('mask', mask,      w,h, mx,my, rad, 255);}
+      else if(tool==='erase'){
+        if(eraseEnabled('pgm')) paintBuffer('pgm', pgm.pixels, w,h, mx,my, rad, maxval);
+        if(eraseEnabled('mask')) paintBuffer('mask', mask, w,h, mx,my, rad, 255);
+      }
       else if(tool==='unscan'){paintBuffer('pgm', pgm.pixels, w,h, mx,my, rad, unknown);}
     };
   
@@ -763,8 +773,8 @@
 	const unknown = getUnknownVal();
   
     // Decide values per active tool
-    const mapVal  = (tool==='paint') ? 0 : (tool==='erase' ? maxval : (tool==='unscan' ? unknown : null));
-    const maskVal = (tool==='mask')  ? 0 : (tool==='erase' ? 255    : null);
+    const mapVal  = (tool==='paint') ? 0 : (tool==='erase' ? (eraseEnabled('pgm') ? maxval : null) : (tool==='unscan' ? unknown : null));
+    const maskVal = (tool==='mask')  ? 0 : (tool==='erase' && eraseEnabled('mask') ? 255 : null);
   
     for(let y = yMin; y <= yMax; y++){
       const rowBase = y * w;
@@ -781,9 +791,12 @@
   
   // To account for Filled pixels in Undo
   function setPixelWithUndo(layerName, buf, idx, value){
-    if(touchedIndices && !touchedIndices.has(idx)){
+    if(buf[idx] === value) return;
+    // Map and mask may edit the same index in one stroke: record each layer.
+    const key = layerName + ':' + idx;
+    if(touchedIndices && !touchedIndices.has(key)){
       currentStroke && currentStroke.push({ layer: layerName, idx, prev: buf[idx], next: value });
-      touchedIndices.add(idx);
+      touchedIndices.add(key);
     }
     buf[idx] = value;
   }
@@ -939,7 +952,6 @@
       const parsed = parsePGM(u8);
       pgmName = filename;
       lastMapExportName = null;
-      lastMaskExportName = null;
       pgm = parsed;
       isShift = false; releaseSpace(); panMode=false; updatePanCursor();
       viewX=0; viewY=0; viewAngle=0; applyViewTransform();
@@ -986,7 +998,6 @@
   
       mask = dst;
       maskName = filename;
-      lastMaskExportName = null;
       $('#maskName').text(filename);
   
       // If base map not loaded yet, we still remember the mask;
@@ -1202,14 +1213,16 @@
     return out;
   }
 
-  function promptExportName(isKeepout){
+  function promptExportName(kind){
     const currentMap = pgmName.replace(/\.pgm$/i,'');
-    const currentMask = maskName !== 'No Keepout' ? maskName.replace(/\.pgm$/i,'')
-      : (lastMapExportName || currentMap).replace(/_keepout$/i,'') + '_keepout';
-    let suggested = isKeepout ? (lastMaskExportName || currentMask) : (lastMapExportName || currentMap);
+    let suggested = lastMapExportName || currentMap;
+    const detail = kind === 'keepout'
+      ? 'Keepout files will use this map name plus _keepout.'
+      : kind === 'full' ? 'The ZIP contains this map and its _keepout PGM/YAML pairs.'
+      : 'The PGM and YAML will use this name.';
     while(true){
       const entered = window.prompt(
-        `Name for ${isKeepout ? 'keepout mask' : 'map'} (without extension). The ZIP, PGM and YAML will share this name:`, suggested);
+        `Map name (without extension). ${detail}`, suggested);
       if(entered === null) return null;
       const base = entered.trim();
       if(!base || /[<>:"/\\|?*\x00-\x1f]/.test(base) || /[. ]$/.test(base) ||
@@ -1237,28 +1250,40 @@
       throw new Error('YAML thresholds must satisfy 0 <= free_thresh < occupied_thresh <= 1');
     if(y.mode != null && !['trinary','scale','raw'].includes(y.mode)) throw new Error('Unsupported YAML mode');
   }
-  function downloadMapPair(image, isKeepout){
-    validateMapYaml(yamlObj);
-    const base = promptExportName(isKeepout);
-    if(base === null) return;
+  function buildMapPair(image, base){
     const y = Object.assign({}, yamlObj, {image:base+'.pgm'});
-    const yaml = jsyaml.dump(y);
-    const zip = encodeZip([
-      {name:base+'.pgm', data:encodePGM(image)},
-      {name:base+'.yaml', data:new TextEncoder().encode(yaml)}
-    ]);
-    dlBytes(zip, base+'.zip', 'application/zip');
-    if(isKeepout) lastMaskExportName = base;
-    else lastMapExportName = base;
+    return [
+      {name:base+'.pgm', data:encodePGM(image), mime:'image/x-portable-graymap'},
+      {name:base+'.yaml', data:new TextEncoder().encode(jsyaml.dump(y)), mime:'text/yaml'}
+    ];
   }
+  function exportMapFiles(kind){
+    if(!pgm || !yamlObj || (kind !== 'map' && !mask)){
+      alert('Load YAML and PGM first.'); return;
+    }
+    validateMapYaml(yamlObj);
+    const base = promptExportName(kind);
+    if(base === null) return;
+    const keepoutImage = {magic:'P5', width:pgm.width, height:pgm.height, maxval:255, pixels:mask};
+    // Build everything before triggering downloads, so serialization failures
+    // cannot leave only one half of a newly exported pair.
+    const files = kind === 'map' ? buildMapPair(pgm,base)
+      : kind === 'keepout' ? buildMapPair(keepoutImage,base+'_keepout')
+      : [...buildMapPair(pgm,base), ...buildMapPair(keepoutImage,base+'_keepout')];
+    if(kind === 'full') dlBytes(encodeZip(files),base+'.zip','application/zip');
+    else files.forEach(file => dlBytes(file.data,file.name,file.mime));
+    lastMapExportName = base;
+  }
+  $('#btnDownloadFull').on('click', ()=>{
+    try{ exportMapFiles('full'); }
+    catch(e){ alert('Full map export error: ' + e.message); }
+  });
   $('#btnDownloadMap').on('click', ()=>{
-    if(!pgm || !yamlObj){ alert('Load YAML and PGM first.'); return; }
-    try{ downloadMapPair(pgm, false); }
+    try{ exportMapFiles('map'); }
     catch(e){ alert('Map export error: ' + e.message); }
   });
   $('#btnDownloadMask').on('click', ()=>{
-    if(!pgm || !yamlObj || !mask){ alert('Load YAML and PGM first.'); return; }
-    try{ downloadMapPair({magic:'P5', width:pgm.width, height:pgm.height, maxval:255, pixels:mask}, true); }
+    try{ exportMapFiles('keepout'); }
     catch(e){ alert('Keepout export error: ' + e.message); }
   });
 
