@@ -10,13 +10,19 @@ The map editor can be thought of as a specialized paint tool, allowing users to 
 
 ## What's New
 
+** November 2026 Release **
 - [x] File tab: Load YAML, Load PGM, both ZIP exports, loaded filenames.
 - [x] Organized UI into modern ribbon sections for Home, Edit, View, and Help
 - [x] General bug fixes (i.e. pan)
 - [x] Fixed YAML map renaming issue
 - [x] Keyboard hotkeys for changing tabs
 - [x] Rotate view accepts any finite degree angle, clockwise positive (e.g. -12.5)
-- [x] Export map set as a ZIP file
+- [x] Export full map set as a ZIP file
+- [x] Export map, keepout, and speed filters individually
+- [x] Speed filter export: <name>_speed.pgm, <name>_speed.yaml, and <name>_speed_filter_info.yaml
+- [x] Percentage and absolute units apply to the whole speed layer. New absolute layers default to a 5 m/s encoding range (0.05 m/s steps), but can be changed and re-encoded if needed
+- [x] Zones have color overlays, numeric labels and an upright hover readout
+- [x] Keep-out zones now paints occupancy 99 such that Nav2 strongly avoids the zones, but does not report a lethal collision in the rare event that the robot accidentally enters a zone. This enables Nav2 to drive a robot out of a keep-out zone instead of immediately failing
 
 ## Features
 - [x] Completely Browser-based Self-Hosted Solution (superior privacy)
@@ -41,7 +47,6 @@ The map editor can be thought of as a specialized paint tool, allowing users to 
 
 Future Work:
 
-- [ ] Speed Limit Mask overlay
 - [ ] Polygon Tool
 - [ ] Grid in Meters
 

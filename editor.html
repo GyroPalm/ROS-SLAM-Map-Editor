@@ -115,21 +115,27 @@
     .overlay-label{pointer-events:none;line-height:normal}
     .col-lg-9{min-width:0}
     @media(max-width:600px){.ribbon-group{padding:2px 10px}.ribbon-tab{padding:9px 16px}}
+    #speedCanvas{position:absolute;left:0;top:0;z-index:2;pointer-events:none;image-rendering:pixelated;background:transparent}
+    #speedHover{position:absolute;bottom:10px;left:10px;z-index:6;background:#102b3dee;color:white;border:1px solid #49b6dd;padding:5px 10px;border-radius:4px;font-size:13px;pointer-events:none}
+    [hidden]{display:none!important}
+    .speed-number{width:95px!important}
+    #speedRangeWrap{display:flex;align-items:center;gap:6px;margin:0}
+    #speedMode{width:auto}
   </style>
 </head>
 <body>
-<div class="toolbar ribbon noselect"><div class="ribbon-title">GyroPalm <span>SLAM Map Editor</span></div><div class="ribbon-tabs" role="tablist" aria-label="Editor ribbon"><button type="button" class="ribbon-tab" id="tab-file" aria-keyshortcuts="Shift+F" title="File (Shift + F)" role="tab" aria-selected="false" aria-controls="panel-file" tabindex="-1">File</button><button type="button" class="ribbon-tab" id="tab-home" aria-keyshortcuts="Shift+H" title="Home (Shift + H)" role="tab" aria-selected="true" aria-controls="panel-home" tabindex="0">Home</button><button type="button" class="ribbon-tab" id="tab-edit" aria-keyshortcuts="Shift+E" title="Edit (Shift + E)" role="tab" aria-selected="false" aria-controls="panel-edit" tabindex="-1">Edit</button><button type="button" class="ribbon-tab" id="tab-view" aria-keyshortcuts="Shift+V" title="View (Shift + V)" role="tab" aria-selected="false" aria-controls="panel-view" tabindex="-1">View</button><button type="button" class="ribbon-tab" id="tab-help" role="tab" aria-selected="false" aria-controls="panel-help" tabindex="-1">Help</button></div><div class="ribbon-panel" id="panel-file" role="tabpanel" aria-labelledby="tab-file" hidden><div class="ribbon-group"><div class="ribbon-controls"><div class="ribbon-stack"><input type="file" id="yamlInput" accept=".yaml,.yml" class="d-none"><input type="file" id="pgmInput" accept=".pgm" class="d-none"><button class="btn btn-sm btn-outline-info" id="btnLoadYaml"><i class="fa fa-file-text-o"></i> Load YAML</button><button class="btn btn-sm btn-outline-info" id="btnLoadPgm"><i class="fa fa-picture-o"></i> Load PGM</button></div></div><div class="ribbon-caption">Open map</div></div><div class="ribbon-group"><div class="ribbon-controls"><div class="ribbon-stack"><button type="button" class="btn btn-sm btn-outline-info" id="btnDownloadFull"><i class="fa fa-file-archive-o"></i> Download Full Map ZIP</button><button class="btn btn-sm btn-success" id="btnDownloadMap" title="Download map PGM and YAML. Allow multiple downloads if your browser asks."><i class="fa fa-download"></i> Download Map</button><button class="btn btn-sm btn-warning" id="btnDownloadMask" title="Download keepout PGM and YAML using the map name plus _keepout. Allow multiple downloads if your browser asks."><i class="fa fa-download"></i> Download Keepout</button></div></div><div class="ribbon-caption">Export map</div></div><div class="ribbon-group"><div class="ribbon-controls"><div class="ribbon-file-list"><span id="yamlName" class="small-note ml-2">No YAML</span><span id="pgmName" class="small-note ml-2">No PGM</span><span id="maskName" class="small-note ml-2">No Keepout</span></div></div><div class="ribbon-caption">Loaded files</div></div></div><div class="ribbon-panel" id="panel-home" role="tabpanel" aria-labelledby="tab-home"><div class="ribbon-group"><div class="ribbon-controls"><div class="btn-group btn-group-sm" role="group" aria-label="Tools">
+<div class="toolbar ribbon noselect"><div class="ribbon-title">GyroPalm <span>SLAM Map Editor</span></div><div class="ribbon-tabs" role="tablist" aria-label="Editor ribbon"><button type="button" class="ribbon-tab" id="tab-file" aria-keyshortcuts="Shift+F" title="File (Shift + F)" role="tab" aria-selected="false" aria-controls="panel-file" tabindex="-1">File</button><button type="button" class="ribbon-tab" id="tab-home" aria-keyshortcuts="Shift+H" title="Home (Shift + H)" role="tab" aria-selected="true" aria-controls="panel-home" tabindex="0">Home</button><button type="button" class="ribbon-tab" id="tab-edit" aria-keyshortcuts="Shift+E" title="Edit (Shift + E)" role="tab" aria-selected="false" aria-controls="panel-edit" tabindex="-1">Edit</button><button type="button" class="ribbon-tab" id="tab-view" aria-keyshortcuts="Shift+V" title="View (Shift + V)" role="tab" aria-selected="false" aria-controls="panel-view" tabindex="-1">View</button><button type="button" class="ribbon-tab" id="tab-help" role="tab" aria-selected="false" aria-controls="panel-help" tabindex="-1">Help</button></div><div class="ribbon-panel" id="panel-file" role="tabpanel" aria-labelledby="tab-file" hidden><div class="ribbon-group"><div class="ribbon-controls"><div class="ribbon-stack"><input type="file" id="yamlInput" accept=".yaml,.yml" class="d-none"><input type="file" id="pgmInput" accept=".pgm" class="d-none"><button class="btn btn-sm btn-outline-info" id="btnLoadYaml"><i class="fa fa-file-text-o"></i> Load YAML</button><button class="btn btn-sm btn-outline-info" id="btnLoadPgm"><i class="fa fa-picture-o"></i> Load PGM</button><span class="speed-load-controls"><input type="file" id="speedInput" accept=".yaml,.yml,.pgm" multiple hidden><button type="button" class="btn btn-sm btn-outline-info" id="btnLoadSpeed">Load Speed YAML / PGM</button></span></div></div><div class="ribbon-caption">Open map</div></div><div class="ribbon-group"><div class="ribbon-controls"><div class="ribbon-stack"><button type="button" class="btn btn-sm btn-outline-info" id="btnDownloadFull"><i class="fa fa-file-archive-o"></i> Download Full Map ZIP</button><button class="btn btn-sm btn-success" id="btnDownloadMap" title="Download map PGM and YAML. Allow multiple downloads if your browser asks."><i class="fa fa-download"></i> Download Map</button><button class="btn btn-sm btn-warning" id="btnDownloadMask" title="Download keepout PGM and YAML using the map name plus _keepout. Allow multiple downloads if your browser asks."><i class="fa fa-download"></i> Download Keepout</button><button type="button" class="btn btn-sm btn-outline-info" id="btnDownloadSpeed" hidden>Download Speed Zones</button></div></div><div class="ribbon-caption">Export map</div></div><div class="ribbon-group"><div class="ribbon-controls"><div class="ribbon-file-list"><span id="yamlName" class="small-note ml-2">No YAML</span><span id="pgmName" class="small-note ml-2">No PGM</span><span id="maskName" class="small-note ml-2">No Keepout</span><span id="speedName" class="small-note">No Speed zones</span></div></div><div class="ribbon-caption">Loaded files</div></div></div><div class="ribbon-panel" id="panel-home" role="tabpanel" aria-labelledby="tab-home"><div class="ribbon-group"><div class="ribbon-controls"><div class="btn-group btn-group-sm" role="group" aria-label="Tools">
           <button class="btn btn-outline-light tool-btn" data-tool="paint" title="Paint Walls (occupied)"><i class="fa fa-paint-brush"></i> Wall</button>
           <button class="btn btn-outline-light tool-btn" data-tool="erase" title="Erase the layers selected in Options"><i class="fa fa-eraser"></i> Erase</button>
 		  <button class="btn btn-outline-light tool-btn" data-tool="unscan" title="Mark as unknown (un-scanned)"><i class="fa fa-minus-square-o"></i> Un-Scan</button>
-          <button class="btn btn-outline-light tool-btn" data-tool="mask" title="Draw Keepout Mask"><i class="fa fa-ban"></i> Keep-Out</button>
-        </div></div><div class="ribbon-caption">Layers</div></div><div class="ribbon-group"><div class="ribbon-controls"><div class="btn-group btn-group-sm ml-2" role="group">
+          <button class="btn btn-outline-light tool-btn" data-tool="mask" title="Draw high-cost, traversable avoidance zones (occupancy 99 / cost 251)"><i class="fa fa-ban"></i> Keep-Out</button>
+        <button class="btn btn-outline-light tool-btn" data-tool="speed" title="Paint speed limits"><i class="fa fa-tachometer"></i> Speed</button></div></div><div class="ribbon-caption">Layers</div></div><div class="ribbon-group"><div class="ribbon-controls"><div class="btn-group btn-group-sm ml-2" role="group">
           <button class="btn btn-outline-warning" id="btnUndo" title="Undo (Ctrl+Z)"><i class="fa fa-undo"></i> Undo</button>
           <button class="btn btn-outline-warning" id="btnRedo" title="Redo (Ctrl+Y / Shift+Z)"><i class="fa fa-repeat"></i> Redo</button>
-        </div></div><div class="ribbon-caption">History</div></div><div class="ribbon-group" id="eraseOptions" hidden><div class="ribbon-controls">
+        </div></div><div class="ribbon-caption">History</div></div><div class="ribbon-group" id="eraseOptions" hidden><div class="ribbon-controls" id="eraseOptionsFields">
 <div class="form-check form-check-inline"><input type="checkbox" class="form-check-input" id="eraseMap" checked><label class="form-check-label" for="eraseMap">Erase Map</label></div>
 <div class="form-check form-check-inline"><input type="checkbox" class="form-check-input" id="eraseKeepout" checked><label class="form-check-label" for="eraseKeepout">Erase Keepout</label></div>
-</div><div class="ribbon-caption">Options</div></div></div><div class="ribbon-panel" id="panel-edit" role="tabpanel" aria-labelledby="tab-edit" hidden><div class="ribbon-group"><div class="ribbon-controls"><div class="btn-group btn-group-sm" role="group" aria-label="Shape">
+<div class="form-check form-check-inline"><input type="checkbox" class="form-check-input" id="eraseSpeed"><label class="form-check-label" for="eraseSpeed">Erase Speed</label></div></div><div class="ribbon-controls" id="speedOptionsFields" hidden><label for="speedMode" class="mb-0">Speed limits</label><select id="speedMode" class="form-control form-control-sm"><option value="1">Percentages</option><option value="2">Absolute m/s</option></select></div><div class="ribbon-controls" id="keepoutOptionsFields" hidden><span>Soft avoidance · max cost <strong>251 / 254</strong><br><small>Traversable, strongly discouraged</small></span></div><div class="ribbon-caption">Options</div></div></div><div class="ribbon-panel" id="panel-edit" role="tabpanel" aria-labelledby="tab-edit" hidden><div class="ribbon-group"><div class="ribbon-controls"><div class="btn-group btn-group-sm" role="group" aria-label="Shape">
           <button class="btn btn-outline-light shape-btn" data-shape="freehand" title="Freehand"><i class="fa fa-pencil"></i> Freehand</button>
           <button class="btn btn-outline-light shape-btn" data-shape="line" title="Line"><i class="fa fa-minus"></i> Line</button>
           <button class="btn btn-outline-light shape-btn" data-shape="rect" title="Rectangle"><i class="fa fa-square-o"></i> Rectangle</button>
@@ -137,7 +143,10 @@
         </div></div><div class="ribbon-caption">Shape</div></div><div class="ribbon-group"><div class="ribbon-controls"><div class="form-check form-check-inline">
 		  <input class="form-check-input" type="checkbox" id="filledRect">
 		  <label class="form-check-label" for="filledRect">Filled</label>
-		</div></div><div class="ribbon-caption">Options</div></div><div class="ribbon-group"><div class="ribbon-controls"><label for="brushSize" class="sr-only">Brush size</label><input type="range" id="brushSize" min="1" max="60" value="8"><span id="brushLabel" class="small-note">8 px</span></div><div class="ribbon-caption">Brush size</div></div></div><div class="ribbon-panel" id="panel-view" role="tabpanel" aria-labelledby="tab-view" hidden><div class="ribbon-group"><div class="ribbon-controls"><div class="ribbon-stack"><div class="form-check form-check-inline">
+		</div></div><div class="ribbon-caption">Options</div></div><div class="ribbon-group"><div class="ribbon-controls"><label for="brushSize" class="sr-only">Brush size</label><input type="range" id="brushSize" min="1" max="60" value="8"><span id="brushLabel" class="small-note">8 px</span></div><div class="ribbon-caption">Brush size</div></div><div class="ribbon-group" id="speedEditGroup" hidden><div class="ribbon-controls">
+<label for="speedValue" class="mb-0">Limit</label><input id="speedValue" type="number" min="0" max="100" step="1" value="50" class="form-control form-control-sm speed-number"><span id="speedUnits">%</span>
+<label id="speedRangeWrap" hidden>Absolute range <input id="speedRange" type="number" min="0.01" step="0.1" value="5" class="form-control form-control-sm speed-number"> m/s</label>
+<span id="speedPaintInfo" class="small-note">Paint: 50%</span></div><div class="ribbon-caption" id="speedStep">Step: 1% · 0 clears limit</div></div></div><div class="ribbon-panel" id="panel-view" role="tabpanel" aria-labelledby="tab-view" hidden><div class="ribbon-group"><div class="ribbon-controls"><div class="ribbon-stack"><div class="form-check form-check-inline">
           <input class="form-check-input" type="checkbox" id="showMask" checked>
           <label class="form-check-label" for="showMask">Show Mask</label>
         </div><div class="form-check form-check-inline">
@@ -146,7 +155,7 @@
         </div><div class="form-check form-check-inline">
           <input class="form-check-input" type="checkbox" id="autoLevels" checked>
           <label class="form-check-label" for="autoLevels">Auto-levels</label>
-        </div></div></div><div class="ribbon-caption">Display</div></div><div class="ribbon-group"><div class="ribbon-controls"><div class="btn-group btn-group-sm" role="group" aria-label="Zoom">
+        </div><div class="form-check form-check-inline"><input id="showSpeed" type="checkbox" class="form-check-input" checked><label for="showSpeed" class="form-check-label">Speed zones</label></div><div class="form-check form-check-inline"><input id="showSpeedLabels" type="checkbox" class="form-check-input" checked><label for="showSpeedLabels" class="form-check-label">Speed labels</label></div></div></div><div class="ribbon-caption">Display</div></div><div class="ribbon-group"><div class="ribbon-controls"><div class="btn-group btn-group-sm" role="group" aria-label="Zoom">
           <button class="btn btn-outline-light" id="zoomOut" title="Zoom Out (−)"><i class="fa fa-search-minus"></i> Out</button>
           <button class="btn btn-outline-light" id="zoomIn" title="Zoom In (+)"><i class="fa fa-search-plus"></i> In</button>
           <button class="btn btn-outline-light" id="zoomReset" title="Reset Zoom"><i class="fa fa-compress"></i> 100%</button>
@@ -184,11 +193,12 @@
         <div class="card-body p-2 noselect">
           <div class="small-note mb-2"><strong>Legend</strong></div>
           <div class="small-note"><i class="fa fa-paint-brush"></i> Wall: Sets map pixels to <code>0</code> (occupied/black)</div>
-          <div class="small-note"><i class="fa fa-eraser"></i> Erase selected layers: map→<code>maxval</code> (free), mask→<code>255</code> (no-keepout)</div>
+          <div class="small-note"><i class="fa fa-eraser"></i> Erase selected layers: map→<code>maxval</code> (free), mask→<code>0</code> (no-keepout)</div>
 		  <div class="small-note"><i class="fa fa-minus-square-o"></i> &nbsp;Un-Scan: Sets map pixels to light gray (unknown)</div>
-          <div class="small-note"><i class="fa fa-ban"></i> &nbsp;Keep-Out: Draws black on mask (keepout)</div>
+          <div class="small-note"><i class="fa fa-ban"></i> &nbsp;Keep-Out: soft avoidance (cost 251); zones remain traversable</div>
 		  <div class="spacer"></div>
-		  <div class="small-note mt-3"><i>Powered by GyroPalm VIMPAACT</i></div>
+		  <div class="small-note">Speed: colored limits with labels. Paint 0 to clear a limit. Percentage and m/s units apply to the whole speed layer.</div>
+          <div class="small-note mt-3"><i>Powered by GyroPalm VIMPAACT</i></div>
         </div>
       </div>
     </div>
@@ -199,9 +209,11 @@
           <div class="overlay-label">Map</div>
           <canvas id="mapCanvas"></canvas>
           <canvas id="maskCanvas"></canvas>
+          <canvas id="speedCanvas"></canvas>
           <canvas id="previewCanvas"></canvas>
           <div id="brushCursor"></div>
         </div>
+        <div id="speedHover" hidden></div>
       </div>
     </div>
   </div>
@@ -217,7 +229,13 @@
   // ===== State =====
   let yamlObj = null, yamlText = '', yamlName = 'map.yaml';
   let pgm = null, pgmName = 'map.pgm';
-  let mask = null; // Uint8ClampedArray (0=keepout, 255=no keepout)
+  let speedMask=null, speedConfig={type:1,base:0,multiplier:1}, speedPaintCode=50, absoluteSpeedRange=5;
+  let speedLoaded=false, speedModified=false, speedName='No Speed zones', speedYaml=null, speedSource=null;
+  let speedLabels=[], speedLabelsDirty=true;
+  let fileLoadQueue=Promise.resolve();
+  const KEEPOUT_SOFT_VALUE = 99; // Humble Costmap2D: round(99 * 254 / 100) = 251.
+  let keepoutYaml=null, keepoutSource=null;
+  let mask = null; // Occupancy codes: 0=free, 1..99=soft cost, 255=unknown/ignored.
 
   let tool = 'paint';               // target: 'paint' | 'erase' | 'mask'
   let shape = 'freehand';           // 'freehand' | 'line' | 'rect'
@@ -232,6 +250,7 @@
   // filename helpers
   const isYaml = name => /\.ya?ml$/i.test(name);
   const isPgm  = name => /\.pgm$/i.test(name);
+  const isSpeedName = name => /_speed(?:_filter_info)?(?:\s*\(\d+\))?\.(pgm|ya?ml)$/i.test(name);
   const isKeepoutName = name => /_keepout\.(pgm|ya?ml)$/i.test(name) || /keepout/i.test(name);
 
   // Panning
@@ -264,6 +283,8 @@
   const mapCanvas = document.getElementById('mapCanvas');
   const maskCanvas = document.getElementById('maskCanvas');
   const previewCanvas = document.getElementById('previewCanvas');
+  const speedCanvas = document.getElementById('speedCanvas');
+  const speedCtx = speedCanvas.getContext('2d');
   const mapCtx = mapCanvas.getContext('2d');
   const maskCtx = maskCanvas.getContext('2d');
   const prevCtx = previewCanvas.getContext('2d');
@@ -303,13 +324,13 @@
   });
   $('.tool-btn[data-tool="paint"]').addClass('active');
   function updateEraseOptions(){
-    document.getElementById('eraseOptions').hidden = tool !== 'erase';
+    updateSpeedControls();
     sizeViewport();
   }
   function eraseEnabled(layer){
-    return document.getElementById(layer === 'pgm' ? 'eraseMap' : 'eraseKeepout').checked;
+    return document.getElementById({pgm:'eraseMap',mask:'eraseKeepout',speed:'eraseSpeed'}[layer]).checked;
   }
-  $('#eraseMap, #eraseKeepout').on('change', () => clearPreview());
+  $('#eraseMap, #eraseKeepout, #eraseSpeed').on('change', () => clearPreview());
 
   $('.shape-btn').on('click', function(){
     $('.shape-btn').removeClass('active'); $(this).addClass('active');
@@ -334,6 +355,17 @@
   $('#btnLoadPgm').on('click', () => $('#pgmInput').click());
   $('#yamlInput').on('change', e => handleFiles(e.target.files));
   $('#pgmInput').on('change', e => handleFiles(e.target.files));
+
+  $('#btnLoadSpeed').on('click', () => $('#speedInput').click());
+  $('#speedInput').on('change', e => handleFiles(e.target.files, true));
+  $('#speedMode').on('change', function(){ changeSpeedConfig(Number(this.value),absoluteSpeedRange); });
+  $('#speedRange').on('change', function(){ changeSpeedConfig(speedConfig.type,Number(this.value)); });
+  $('#speedValue').on('change', onSpeedValueChange);
+  $('#showSpeed, #showSpeedLabels').on('change', () => {
+    redrawSpeed(); document.getElementById('speedHover').hidden=true;
+  });
+  viewport.addEventListener('mousemove', updateSpeedHover);
+  viewport.addEventListener('mouseleave', () => {document.getElementById('speedHover').hidden=true;});
 
   // Zoom controls
   $('#zoomIn').on('click', ()=> setZoom(Math.min(ZMAX, zoom*ZSTEP)));
@@ -472,9 +504,9 @@
     const ratio=z/zoom;
     zoom=z;
     const w=Math.round(pgm.width*zoom), h=Math.round(pgm.height*zoom);
-    [mapCanvas,maskCanvas,previewCanvas].forEach(cv=>{cv.width=w;cv.height=h;});
+    [mapCanvas,maskCanvas,speedCanvas,previewCanvas].forEach(cv=>{cv.width=w;cv.height=h;});
     anchorView(cx*ratio,cy*ratio,vx,vy);
-    redrawMap(); redrawMask(); clearPreview(); updateBrushCursorSize();
+    redrawMap(); redrawMask(); redrawSpeed(); clearPreview(); updateBrushCursorSize();
   }
   function clamp(v,lo,hi){ return Math.max(lo,Math.min(hi,v)); }
   function zoomAtClient(clientX,clientY,factor){
@@ -570,6 +602,7 @@
   // ===== Drawing lifecycle =====
   function startDrawing(cx, cy){
     if(!pgm) return;
+    if(tool==='speed'){ if(!onSpeedValueChange())return; ensureSpeedMask(); }
     if(shape === 'freehand'){
       drawing = true;
       beginStroke();
@@ -625,6 +658,7 @@
       redoStack.length = 0;
     }
     currentStroke = null; touchedIndices = null;
+    refreshSpeed();
   }
 
   function undo(){
@@ -635,7 +669,7 @@
     // and stage a proper redo that will restore to "next".
     const redoSet = [];
     for (const ch of changeSet) {
-      const buf = (ch.layer === 'pgm') ? pgm.pixels : mask;
+      const buf = ch.layer === 'pgm' ? pgm.pixels : ch.layer === 'speed' ? speedMask : mask;
       // current value should be ch.next; we revert to ch.prev
       buf[ch.idx] = ch.prev;
       // prepare redo to go back to NEXT (the drawn value)
@@ -644,7 +678,7 @@
     redoStack.push(redoSet);
   
     redrawMap(); 
-    redrawMask();
+    redrawMask(); speedLabelsDirty=true;refreshSpeed();
   }
   
   function redo(){
@@ -654,7 +688,7 @@
     // Re-apply the "next" values and push the same set back onto undo
     const undoSet = [];
     for (const ch of changeSet) {
-      const buf = (ch.layer === 'pgm') ? pgm.pixels : mask;
+      const buf = ch.layer === 'pgm' ? pgm.pixels : ch.layer === 'speed' ? speedMask : mask;
       // current value should be ch.prev; we go to ch.next
       buf[ch.idx] = ch.next;
       // keep a proper undo record (same prev/next pair)
@@ -663,7 +697,7 @@
     undoStack.push(undoSet);
   
     redrawMap(); 
-    redrawMask();
+    redrawMask(); speedLabelsDirty=true;refreshSpeed();
   }
 
   // ===== Painting primitives =====
@@ -673,15 +707,19 @@
     const rad = Math.max(1, Math.floor(brush/2));
     const w = pgm.width, h = pgm.height, maxval = pgm.maxval;
   
-    if(tool === 'mask'){
-      paintBuffer('mask', mask, w, h, mx, my, rad, 0);
+    if(tool === 'speed'){
+      ensureSpeedMask();paintBuffer('speed',speedMask,w,h,mx,my,rad,speedPaintCode);redrawSpeed();
+    } else if(tool === 'mask'){
+      paintBuffer('mask', mask, w, h, mx, my, rad, KEEPOUT_SOFT_VALUE);
       redrawMask();
     } else if(tool === 'paint'){
       paintBuffer('pgm', pgm.pixels, w, h, mx, my, rad, 0);
       redrawMap();
     } else if(tool === 'erase'){
       if(eraseEnabled('pgm')) paintBuffer('pgm', pgm.pixels, w, h, mx, my, rad, maxval);
-      if(eraseEnabled('mask')) paintBuffer('mask', mask, w, h, mx, my, rad, 255);
+      if(eraseEnabled('mask')) paintBuffer('mask', mask, w, h, mx, my, rad, 0);
+      if(speedMask && eraseEnabled('speed')) paintBuffer('speed',speedMask,w,h,mx,my,rad,0);
+      redrawSpeed();
       redrawMap(); redrawMask();
     } else if(tool === 'unscan'){
       paintBuffer('pgm', pgm.pixels, w, h, mx, my, rad, getUnknownVal());
@@ -723,11 +761,13 @@
     const unknown = getUnknownVal();
   
     const drawPoint = (mx,my)=>{
-      if(tool==='paint')      paintBuffer('pgm', pgm.pixels, w,h, mx,my, rad, 0);
-      else if(tool==='mask')  paintBuffer('mask', mask,       w,h, mx,my, rad, 0);
+      if(tool==='speed'){ensureSpeedMask();paintBuffer('speed',speedMask,w,h,mx,my,rad,speedPaintCode);}
+      else if(tool==='paint') paintBuffer('pgm', pgm.pixels, w,h, mx,my, rad, 0);
+      else if(tool==='mask')  paintBuffer('mask', mask,       w,h, mx,my, rad, KEEPOUT_SOFT_VALUE);
       else if(tool==='erase'){
         if(eraseEnabled('pgm')) paintBuffer('pgm', pgm.pixels, w,h, mx,my, rad, maxval);
-        if(eraseEnabled('mask')) paintBuffer('mask', mask, w,h, mx,my, rad, 255);
+        if(eraseEnabled('mask')) paintBuffer('mask', mask, w,h, mx,my, rad, 0);
+        if(speedMask && eraseEnabled('speed'))paintBuffer('speed',speedMask,w,h,mx,my,rad,0);
       }
       else if(tool==='unscan'){paintBuffer('pgm', pgm.pixels, w,h, mx,my, rad, unknown);}
     };
@@ -739,7 +779,7 @@
       if(e2 > -dy){ err -= dy; x0 += sx; }
       if(e2 <  dx){ err += dx; y0 += sy; }
     }
-    redrawMap(); redrawMask();
+    redrawMap(); redrawMask();redrawSpeed();
   }
 
   function drawThickRect(cx1, cy1, cx2, cy2){
@@ -774,7 +814,9 @@
   
     // Decide values per active tool
     const mapVal  = (tool==='paint') ? 0 : (tool==='erase' ? (eraseEnabled('pgm') ? maxval : null) : (tool==='unscan' ? unknown : null));
-    const maskVal = (tool==='mask')  ? 0 : (tool==='erase' && eraseEnabled('mask') ? 255 : null);
+    const maskVal = (tool==='mask') ? KEEPOUT_SOFT_VALUE : (tool==='erase' && eraseEnabled('mask') ? 0 : null);
+    if(tool==='speed')ensureSpeedMask();
+    const speedVal = tool==='speed' ? speedPaintCode : (tool==='erase' && speedMask && eraseEnabled('speed') ? 0 : null);
   
     for(let y = yMin; y <= yMax; y++){
       const rowBase = y * w;
@@ -782,16 +824,18 @@
         const idx = rowBase + x;
         if(mapVal  !== null) setPixelWithUndo('pgm',  pgm.pixels, idx, mapVal);
         if(maskVal !== null) setPixelWithUndo('mask', mask,       idx, maskVal);
+        if(speedVal !== null)setPixelWithUndo('speed',speedMask,idx,speedVal);
       }
     }
   
     redrawMap();
-    redrawMask();
+    redrawMask();redrawSpeed();
   }
   
   // To account for Filled pixels in Undo
   function setPixelWithUndo(layerName, buf, idx, value){
     if(buf[idx] === value) return;
+    if(layerName==='speed'){speedLoaded=true;speedModified=true;speedLabelsDirty=true;if(speedName==='No Speed zones')speedName=pgmName.replace(/\.pgm$/i,'')+'_speed.pgm';}
     // Map and mask may edit the same index in one stroke: record each layer.
     const key = layerName + ':' + idx;
     if(touchedIndices && !touchedIndices.has(key)){
@@ -831,13 +875,13 @@
     prevCtx.lineCap = 'round';
   
     if(shape==='line'){
-      prevCtx.strokeStyle = (tool==='mask')   ? 'rgba(255,0,0,0.7)' :
+      prevCtx.strokeStyle = (tool==='speed') ? 'rgba(35,190,245,0.9)' : (tool==='mask') ? 'rgba(255,0,0,0.7)' :
 							(tool==='erase')  ? 'rgba(255,255,255,0.85)' :
 							(tool==='unscan') ? 'rgba(205,205,205,0.9)' :
 												'rgba(0,0,0,0.85)';
       prevCtx.beginPath(); prevCtx.moveTo(cx1, cy1); prevCtx.lineTo(cx2, cy2); prevCtx.stroke();
     } else if(shape==='rect'){
-      prevCtx.strokeStyle = (tool==='mask')   ? 'rgba(255,0,0,0.7)' :
+      prevCtx.strokeStyle = (tool==='speed') ? 'rgba(35,190,245,0.9)' : (tool==='mask') ? 'rgba(255,0,0,0.7)' :
 							(tool==='erase')  ? 'rgba(255,255,255,0.85)' :
 							(tool==='unscan') ? 'rgba(205,205,205,0.9)' :
 												'rgba(0,0,0,0.85)';
@@ -845,7 +889,7 @@
       const w = Math.abs(cx2-cx1), h = Math.abs(cy2-cy1);
       if(filledRect){
         // show a translucent fill preview
-        prevCtx.fillStyle = (tool==='mask')   ? 'rgba(255,0,0,0.25)' :
+        prevCtx.fillStyle = (tool==='speed') ? 'rgba(35,190,245,0.3)' : (tool==='mask') ? 'rgba(255,0,0,0.25)' :
 						  (tool==='erase')  ? 'rgba(255,255,255,0.25)' :
 						  (tool==='unscan') ? 'rgba(205,205,205,0.25)' :
 											  'rgba(0,0,0,0.25)';
@@ -874,61 +918,68 @@
   }
 
   // ===== Loaders =====
-  function handleFiles(fileList){
-    const files = Array.from(fileList);
-    if (files.length === 0) return;
-  
-    // quick index so _keepout.yaml can resolve its image from the same drop
-    const byName = new Map(files.map(f => [f.name, f]));
-  
-    // First pass: YAML files (base or keepout)
-    files.filter(f => isYaml(f.name)).forEach(file=>{
-      readText(file).then(txt=>{
-        try{
-          const yobj = jsyaml.load(txt);
-          // Decide base vs keepout by filename (and fall back to content hint)
-          const isKO = isKeepoutName(file.name);
-          if(isKO){
-            // mask YAML: try to load its image from this batch
-            const imgField = (yobj && yobj.image) ? String(yobj.image) : '';
-            const baseName = imgField.split('/').pop();  // handle relative paths
-            if(baseName && byName.has(baseName)){
-              // load mask image from batch
-              readBinary(byName.get(baseName)).then(buf=>{
-                loadKeepoutPGM(baseName, new Uint8Array(buf));
-              }).catch(err=> alert('Keepout image load error: ' + err.message));
-            }else{
-              // If baseName missing from the drop, just note it—user can drop it later
-              console.warn('Drop the keepout image "'+ baseName +'" to view the mask.');
-            }
-            // Show YAML in preview if you want:
-            // (Optional) $('#yamlPreview').text(txt);
-          }else{
-            // base map YAML
-            yamlText = txt;
-            yamlObj = yobj;
-            yamlName = file.name;
-            $('#yamlPreview').text(txt);
-            $yamlName.text(file.name);
-			updateDebug();
-          }
-        }catch(e){
-          alert('YAML parse error in ' + file.name + ': ' + e.message);
+  function handleFiles(fileList,forceSpeed=false){
+    const files=Array.from(fileList);
+    // Serial batches prevent base/mask races; within each batch load base first.
+    fileLoadQueue=fileLoadQueue.then(async()=>{
+      const used=new Set(),byName=new Map(files.map(f=>[f.name,f]));
+      const docs=[];
+      for(const file of files.filter(f=>isYaml(f.name))){
+        const txt=await readText(file),obj=jsyaml.load(txt);
+        docs.push({file,txt,obj});
+      }
+      const speedDoc=d=>forceSpeed||isSpeedName(d.file.name)||!!(d.obj&&(d.obj.gyropalm_speed_filter||d.obj.speed_filter_info_server||[1,2].includes(d.obj.costmap_filter_info_server?.ros__parameters?.type)));
+      const hasNewBase=files.some(f=>isPgm(f.name)&&!forceSpeed&&!isSpeedName(f.name)&&!isKeepoutName(f.name));
+      for(const d of docs.filter(d=>!speedDoc(d)&&!isKeepoutName(d.file.name))){
+        validateMapYaml(d.obj);if(!hasNewBase){checkSpeedGeometry(speedYaml,d.obj);
+          if(keepoutYaml&&(Math.abs(keepoutYaml.resolution-d.obj.resolution)>1e-9||keepoutYaml.origin.some((v,i)=>Math.abs(v-d.obj.origin[i])>1e-9)))throw new Error('New base YAML does not align with the loaded keepout mask.');
         }
-      });
-    });
-  
-    // Second pass: PGM files (base or keepout)
-    files.filter(f => isPgm(f.name)).forEach(file=>{
-      readBinary(file).then(buf=>{
-        const u8 = new Uint8Array(buf);
-        if(isKeepoutName(file.name)){
-          loadKeepoutPGM(file.name, u8);
-        }else{
-          loadBasePGM(file.name, u8);
+        yamlObj=d.obj;yamlText=d.txt;yamlName=d.file.name;
+        $('#yamlPreview').text(d.txt);$yamlName.text(d.file.name);updateDebug();
+      }
+      for(const file of files.filter(f=>isPgm(f.name)&&!forceSpeed&&!isSpeedName(f.name)&&!isKeepoutName(f.name))){
+        loadBasePGM(file.name,new Uint8Array(await readBinary(file)));used.add(file.name);
+      }
+      let incomingSpeedConfig=null;
+      // Optional exported filter-info parameters can supply metadata for external masks.
+      for(const d of docs.filter(d=>speedDoc(d)&&d.obj&&!d.obj.image)){
+        const node=d.obj.speed_filter_info_server||d.obj.costmap_filter_info_server;
+        if(node&&node.ros__parameters){
+          const q=node.ros__parameters;const config={type:Number(q.type),base:Number(q.base),multiplier:Number(q.multiplier)};
+          validateSpeedConfig(config);incomingSpeedConfig=config;
+          for(const sd of docs.filter(sd=>speedDoc(sd)&&sd.obj&&sd.obj.image&&!sd.obj.gyropalm_speed_filter))sd.obj.gyropalm_speed_filter=config;
         }
-      }).catch(err=> alert('PGM parse error in ' + file.name + ': ' + err.message));
-    });
+      }
+      if(incomingSpeedConfig&&!docs.some(d=>speedDoc(d)&&d.obj&&d.obj.image)){
+        const meta=speedYaml?Object.assign({},speedYaml,{gyropalm_speed_filter:incomingSpeedConfig}):null;
+        if(speedSource)applySpeedSource(speedSource,meta,incomingSpeedConfig);
+        else {speedConfig=incomingSpeedConfig;updateSpeedControls();}
+      }
+      for(const d of docs.filter(speedDoc)){
+        if(!d.obj||!d.obj.image)continue;
+        // A new paired PGM must replace the old source before applying metadata.
+        const img=String(d.obj.image).split(/[\\/]/).pop();
+        let source;
+        if(byName.has(img)){
+          source={name:img,parsed:parsePGM(new Uint8Array(await readBinary(byName.get(img))))};used.add(img);
+        }
+        loadSpeedYaml(d.obj,d.file.name,source);
+      }
+      for(const d of docs.filter(d=>!speedDoc(d)&&isKeepoutName(d.file.name))){
+        if(!d.obj?.image)continue;
+        const img=String(d.obj.image).split(/[\\/]/).pop();let source;
+        if(byName.has(img)){source=keepoutSourceFromBytes(img,new Uint8Array(await readBinary(byName.get(img))));used.add(img);}
+        loadKeepoutYaml(d.obj,d.file.name,source);
+      }
+      for(const file of files.filter(f=>isPgm(f.name)&&!used.has(f.name))){
+        const data=new Uint8Array(await readBinary(file));
+        if(forceSpeed||isSpeedName(file.name))loadSpeedPGM(file.name,data);
+        else if(isKeepoutName(file.name))loadKeepoutPGM(file.name,data);
+      }
+      for(const id of ['yamlInput','pgmInput','speedInput'])document.getElementById(id).value='';
+      updateSpeedControls();updateDebug();
+    }).catch(e=>alert('File load error: '+e.message));
+    return fileLoadQueue;
   }
   function readText(file){
     return new Promise((res,rej)=>{
@@ -950,6 +1001,11 @@
   function loadBasePGM(filename, u8){
     try{
       const parsed = parsePGM(u8);
+      if(pgm){
+        mask=null;keepoutSource=null;keepoutYaml=null;maskName='No Keepout';
+        speedMask=null;speedSource=null;speedYaml=null;speedLoaded=false;speedModified=false;speedName='No Speed zones';speedLabels=[];
+      }
+      undoStack.length=0;redoStack.length=0;speedLabelsDirty=true;
       pgmName = filename;
       lastMapExportName = null;
       pgm = parsed;
@@ -960,66 +1016,99 @@
       // If mask not allocated or wrong size, reset/resize it to match the map
       if(!mask || (mask.length !== pgm.width*pgm.height)){
         mask = new Uint8ClampedArray(pgm.width*pgm.height);
-        mask.fill(255); // no keepout by default
+        mask.fill(0); // no keepout by default
         maskName = 'No Keepout';
         $('#maskName').text(maskName);
       }
   
-      setupCanvasFromPGM();  // this already redraws and updates dbg
+      setupCanvasFromPGM();
+      if(keepoutSource)applyKeepoutSource();
+      if(speedSource)applySpeedSource();
+      updateSpeedControls();
     }catch(e){
       alert('Base PGM load error: ' + e.message);
     }
   }
   
-  function loadKeepoutPGM(filename, u8){
-    try{
-      const kpgm = parsePGM(u8);
-  
-      // If we already have a base map, ensure sizes match
-      if(pgm && (kpgm.width !== pgm.width || kpgm.height !== pgm.height)){
-        alert(`Keepout mask size ${kpgm.width}x${kpgm.height} does not match base map ${pgm.width}x${pgm.height}. Skipping.`);
-        return;
-      }
-  
-      // Convert keepout to 0..255 (0=keepout, 255=no keepout)
-      const total = kpgm.width * kpgm.height;
-      const dst = new Uint8ClampedArray(total);
-      const maxv = kpgm.maxval || 255;
-  
-      if(kpgm.pixels.BYTES_PER_ELEMENT === 1 && maxv === 255){
-        // Fast path: already 8-bit
-        dst.set(kpgm.pixels);
+  const keepoutDeploymentNotes = "GyroPalm SLAM Map Editor - Soft Keepout Zones for Nav2 Humble\n\nBEHAVIOR\nKeep-out now paints occupancy 99. Humble's KeepoutFilter converts this to\ncostmap cost round(99 * 254 / 100) = 251, below the 253/254 obstacle thresholds.\nNavFn can plan through these cells, and the mask alone does not make MPPI\nreport a lethal collision. The high traversal cost still discourages entry.\nThis applies to ordinary navigation as well as escape: zones are traversable.\nController weights, real obstacles and other costmap layers can still prevent\nan escape. This change cannot guarantee success for every rescue goal.\n\nEXPORT AND DEPLOY\nDownload Keepout emits <name>_keepout.pgm and <name>_keepout.yaml.\nDownload Full Map ZIP includes that pair and this guide.\nThe keepout YAML MUST use mode: raw. The PGM maxval is 255:\n  0       no added cost\n  1..99   soft cost (painted zones use 99)\n  255     unknown; ignored by KeepoutFilter\nA generic image viewer will display this mask differently from a black/white\ntrinary mask. Use the editor overlay to inspect the zones.\n\nReplace BOTH deployed keepout files, then restart the Nav2 launch including\nthe mask map_server. Restarting clears previously cached lethal mask costs;\nmerely publishing a softer mask may leave old high costs in place. Confirm\nthat global and local keepout filters use the new mask. Keep using the base\nmap as the normal navigation map, with this mask on its separate mask server.\nExisting KeepoutFilter type 0 configuration remains applicable.\n\nIMPORT\nLoad the base map plus old _keepout YAML/PGM, then re-export the keepout pair.\nOld trinary black/white masks convert to soft values automatically. Raw and\nscale masks retain their lower occupancy values, capped at 99; unknown is\npreserved. Load YAML with external masks so their encoding is interpreted\ncorrectly. This editor's new PGM files contain a raw-mode comment marker for\nPGM-only reimports. Base and keepout dimensions, resolution and origin must\nmatch; mismatched geometry is rejected.\n\nHome > Keep-out > Options displays the soft cost. All drawing shapes, layer\nselective erasure, Undo/Redo, speed zones and view-only rotation are retained.\n\nSOURCES (Humble)\nhttps://api.nav2.org/nav2-humble/html/costmap__2d_8cpp_source.html\nhttps://api.nav2.org/nav2-humble/html/keepout__filter_8cpp_source.html\nhttps://api.nav2.org/nav2-humble/html/navfn_8cpp_source.html\nhttps://api.nav2.org/nav2-humble/html/cost__critic_8cpp_source.html\n\nVALIDATION\nJavaScript tests cover decoding, painting, erasing, Undo/Redo, import/export\nround trips, separate/mixed file loading, geometry checks and speed regression.\nNo live browser UI or ROS2/Nav2 robot run was available in this environment.\n";
+
+  // ===== Soft keepout masks =====
+  function decodeKeepoutPGM(parsed,meta){
+    const out=new Uint8Array(parsed.width*parsed.height);
+    const mode=meta?.mode || 'trinary',negate=meta?.negate || 0;
+    const free=meta?.free_thresh ?? .25,occupied=meta?.occupied_thresh ?? .65;
+    const roundEven=n=>Math.abs(n-Math.floor(n)-.5)<1e-10 ? 2*Math.round(n/2) : Math.round(n);
+    for(let i=0;i<out.length;i++){
+      const shade=parsed.pixels[i]/parsed.maxval;let code;
+      if(mode==='raw'){
+        code=Math.round(shade*255);
+        if(code>100)code=-1;
       }else{
-        // Normalize to 8-bit
-        for(let i=0;i<total;i++){
-          dst[i] = Math.round((kpgm.pixels[i] * 255) / maxv);
-        }
+        const occ=negate?shade:1-shade;
+        if(occ>occupied)code=100;
+        else if(occ<free)code=0;
+        else if(mode==='scale')code=roundEven((occ-free)/(occupied-free)*100);
+        else if(mode==='trinary')code=-1;
+        else throw new Error('Unsupported keepout map mode.');
       }
-  
-      mask = dst;
-      maskName = filename;
-      $('#maskName').text(filename);
-  
-      // If base map not loaded yet, we still remember the mask;
-      // once the map loads and canvases size, redraw will display it.
-      if(pgm){
-        // resize display canvases to current zoom if needed (already matched sizes)
-        maskCanvas.width = Math.round(pgm.width * zoom);
-        maskCanvas.height = Math.round(pgm.height * zoom);
-        redrawMask();
-      }
-  
-      // Debug line update
-      updateDebug(); 
-    }catch(e){
-      alert('Keepout PGM load error: ' + e.message);
+      out[i]=code<0?255:Math.min(KEEPOUT_SOFT_VALUE,code);
     }
+    return out;
+  }
+  function validateKeepoutGeometry(meta){
+    if(!meta || !yamlObj)return;
+    if(Math.abs(meta.resolution-yamlObj.resolution)>1e-9 ||
+       meta.origin.some((n,i)=>Math.abs(n-yamlObj.origin[i])>1e-9))
+      throw new Error('Keepout resolution/origin differ from the base map. Use an aligned mask.');
+  }
+  function applyKeepoutSource(source=keepoutSource,meta=keepoutYaml){
+    if(!source)return;
+    if(pgm&&(source.parsed.width!==pgm.width||source.parsed.height!==pgm.height))
+      throw new Error('Keepout mask dimensions do not match the base map.');
+    validateKeepoutGeometry(meta);
+    const decoding=source.rawMarker ? {...meta,mode:'raw'} : meta;
+    const pixels=decodeKeepoutPGM(source.parsed,decoding);
+    keepoutSource=source;keepoutYaml=meta;mask=pixels;maskName=source.name;
+    undoStack.length=0;redoStack.length=0;$('#maskName').text(maskName);
+    if(pgm){maskCanvas.width=Math.round(pgm.width*zoom);maskCanvas.height=Math.round(pgm.height*zoom);redrawMask();}
+    updateDebug();
+  }
+  function keepoutSourceFromBytes(name,u8){
+    const head=new TextDecoder().decode(u8.subarray(0,512));
+    return {name,parsed:parsePGM(u8),rawMarker:/^# GyroPalm Keepout mask; mode=raw;/m.test(head)};
+  }
+  function loadKeepoutPGM(filename,u8){
+    const source=keepoutSourceFromBytes(filename,u8);
+    applyKeepoutSource(source);
+  }
+  function loadKeepoutYaml(meta,filename,sourceOverride){
+    validateMapYaml(meta);validateKeepoutGeometry(meta);
+    const expected=String(meta.image).split(/[\\/]/).pop();
+    const source=sourceOverride || (keepoutSource && keepoutSource.name===expected ? keepoutSource : null);
+    if(source){applyKeepoutSource(source,meta);return;}
+    keepoutYaml=meta;keepoutSource=null;
+    mask=pgm?new Uint8Array(pgm.width*pgm.height):null;
+    maskName=filename+' (waiting for PGM)';$('#maskName').text(maskName);
+    undoStack.length=0;redoStack.length=0;
+    if(pgm)redrawMask();
+  }
+  function buildKeepoutPair(base){
+    validateKeepoutGeometry(keepoutYaml);
+    const pixels=Uint8Array.from(mask,value=>value===255?255:Math.min(KEEPOUT_SOFT_VALUE,value));
+    const y={image:base+'.pgm',mode:'raw',resolution:yamlObj.resolution,
+      origin:yamlObj.origin.slice(),negate:0,occupied_thresh:.65,free_thresh:.25,
+      gyropalm_keepout:{behavior:'soft_avoidance',max_occupancy:KEEPOUT_SOFT_VALUE,humble_max_cost:251}};
+    return [
+      {name:base+'.pgm',data:encodePGM({width:pgm.width,height:pgm.height,maxval:255,pixels,
+        comment:'GyroPalm Keepout mask; mode=raw; max_occupancy=99'}),mime:'image/x-portable-graymap'},
+      {name:base+'.yaml',data:new TextEncoder().encode(jsyaml.dump(y)),mime:'text/yaml'}
+    ];
   }
 
   function setupCanvasFromPGM(){
     if(!pgm) return;
-    [mapCanvas, maskCanvas, previewCanvas].forEach(cv => { cv.width = Math.round(pgm.width*zoom); cv.height = Math.round(pgm.height*zoom); });
-    redrawMap(); redrawMask(); clearPreview(); updateBrushCursorSize();
+    [mapCanvas, maskCanvas, speedCanvas, previewCanvas].forEach(cv => { cv.width = Math.round(pgm.width*zoom); cv.height = Math.round(pgm.height*zoom); });
+    redrawMap(); redrawMask(); redrawSpeed(); clearPreview(); updateBrushCursorSize();
 
 	updateDebug();
   }
@@ -1028,7 +1117,7 @@
     const expected = yamlObj && typeof yamlObj.image === 'string' ? yamlObj.image : '';
     const expectedBase = expected.split(/[\\/]/).pop();
     $('#mapFileWarning').text(pgm && yamlObj && expectedBase !== pgmName
-      ? `YAML references "${expected}" but the loaded image is "${pgmName}". Export ZIP will use a matching filename pair.` : '');
+      ? `YAML references "${expected}" but the loaded image is "${pgmName}". Exports will use a matching filename pair.` : '');
     if(!pgm){
       $('#dbgInfo').text('—');
       return;
@@ -1037,7 +1126,7 @@
     const neg = (yamlObj && yamlObj.negate != null) ? yamlObj.negate : '(n/a)';
     $('#dbgInfo').text(
       `PGM: ${pgm.width}×${pgm.height}, maxval=${pgm.maxval}, magic=${pgm.magic}; ` +
-      `YAML negate=${neg}; Keepout: ${keep}`
+      `YAML negate=${neg}; Keepout: ${keep}; Speed: ${speedName}`
     );
   }
 
@@ -1076,12 +1165,12 @@
     const {width:w, height:h} = pgm;
     const img = maskCtx.createImageData(w, h);
     for(let i=0;i<w*h;i++){
-      const m = mask[i];      // 0..255
-      const isKO = (m <= 20);
+      const m = mask[i];
+      const isKO = m > 0 && m <= KEEPOUT_SOFT_VALUE;
       img.data[4*i+0] = isKO ? 255 : 0;
       img.data[4*i+1] = 0;
       img.data[4*i+2] = 0;
-      img.data[4*i+3] = isKO ? 120 : 0;
+      img.data[4*i+3] = isKO ? Math.round(35+85*m/KEEPOUT_SOFT_VALUE) : 0;
     }
     const tmp = document.createElement('canvas');
     tmp.width = w; tmp.height = h;
@@ -1089,6 +1178,228 @@
     maskCtx.imageSmoothingEnabled = false;
     maskCtx.clearRect(0,0,maskCanvas.width,maskCanvas.height);
     maskCtx.drawImage(tmp, 0,0, maskCanvas.width, maskCanvas.height);
+  }
+
+  const speedDeploymentNotes = "GyroPalm SLAM Map Editor - Speed Zones for Nav2 Humble\n\nEDITOR\nSelect Home > Speed. Home > Options selects Percentages or Absolute m/s.\nIn Edit > Speed settings, enter a limit and use any existing shape/brush.\nA value of 0 REMOVES the restriction; it does not command a stop.\nPositive percentage limits are percentages of the controller's configured\nmaximum speed, not percentages of the current measured speed.\n\nAbsolute mode defaults to a 5 m/s range with 0.05 m/s steps. Change the range\nfor another step size (range / 100). The Paint readout shows the actual stored\nvalue after rounding. This is an encoding range, not a robot speed setting.\nChanging units or range affects the entire speed layer and asks for confirmation\nwhen zones exist; it clears Undo history. One layer cannot mix percentages and\nabsolute limits. Ordinary painting and erasing have Undo/Redo.\n\nZones have color overlays, numeric labels and an upright hover readout. View\nhas independent Speed zones and Speed labels checkboxes. Erase > Options\nincludes Erase Speed, initially unchecked so existing erase behavior is retained.\nAlternatively paint speed 0 over a zone. Rotation is view-only.\n\nIMPORT\nLoad the base map YAML/PGM first, or drop all files together. Load Speed YAML /\nPGM accepts a speed pair; generic Load buttons and drag/drop recognize *_speed.\nSpeed and base grids must match dimensions, resolution and origin. Misaligned\nmasks are rejected rather than silently shifted/resampled.\n\nEditor exports retain conversion metadata in gyropalm_speed_filter inside the\nspeed map YAML. Nav2 map_server ignores that extra field. For external masks\nwithout this metadata, import their filter-info config with the pair or enter\nits type,base,multiplier when prompted. Do not guess these values. PGM-only\nimports are interpreted as raw 0..100 codes with the current speed settings;\nloading its YAML applies the actual map decoding/metadata. External scale and\ntrinary masks are decoded using Humble's rules; unknown/invalid cells are rejected.\n\nEXPORT\nDownload Speed Zones emits:\n  <name>_speed.pgm               Raw pixel codes 0..100, PGM maxval 255.\n  <name>_speed.yaml              mode: raw; aligned resolution/origin.\n  <name>_speed_filter_info.yaml  ROS parameters for the speed info server.\nAllow multiple browser downloads if prompted. Keep pair filenames intact.\nFull Map ZIP additionally includes these files and this guide when speed zones\nare present. A loaded all-zero speed mask can also be exported to clear limits.\n\nNAV2 INTEGRATION -- NOT AUTOMATICALLY ENABLED BY THE MAP FILES\nThe normal map_server must still load the base map YAML. Run a separate mask\nmap_server for the speed YAML; do not substitute the speed map for the base map.\n\nExample server arguments (replace paths with your actual exported files):\nros2 run nav2_map_server map_server --ros-args -r __node:=speed_mask_server \\\n  -p yaml_filename:=/absolute/path/<name>_speed.yaml \\\n  -p topic_name:=/speed_filter_mask -p frame_id:=map\nros2 run nav2_map_server costmap_filter_info_server --ros-args \\\n  -r __node:=speed_filter_info_server \\\n  --params-file /absolute/path/<name>_speed_filter_info.yaml\n\nBoth are lifecycle nodes. Add speed_mask_server and speed_filter_info_server\nto your launch/lifecycle manager and configure/activate them. Use the same\nuse_sim_time setting as the rest of your robot. Exported info config defaults\nto false; override it for simulation. Match namespaces if your robot uses them.\n\nMerge this into the existing GLOBAL COSTMAP ros__parameters block:\n  filters: [keepout_filter, speed_filter]\n  speed_filter:\n    plugin: \"nav2_costmap_2d::SpeedFilter\"\n    enabled: true\n    filter_info_topic: \"/speed_filter_info\"\n    speed_limit_topic: \"/speed_limit\"\n\nPreserve your existing filters and their exact names. Include keepout_filter\nonly if it already exists; otherwise filters can be [speed_filter]. Filters\nare configured under filters, not plugins. Avoid duplicate speed publishers\non both costmaps. The controller_server must subscribe to the same\nspeed_limit_topic (/speed_limit) and the selected controller must implement\nspeed-limit handling. These files do not configure or activate your robot.\n\nHumble decoding:\n  mask 0 = no speed limit.\n  mask 1..100 => speed_limit = base + multiplier * mask.\n  type 1 = percentage; type 2 = absolute m/s.\nThe generated info YAML is authoritative for base/multiplier/type. Speed info\nand mask topics are separate from keepout topics so the filters can coexist.\n\nSOURCES\nhttps://api.nav2.org/nav2-humble/html/speed__filter_8cpp_source.html\nhttps://api.nav2.org/nav2-humble/html/map__io_8cpp_source.html\nhttps://api.nav2.org/nav2-humble/html/costmap__filter__info__server_8cpp_source.html\n\nVALIDATION LIMIT\nThe editor's encoding, import/export, editing and coordinate logic are tested\nin JavaScript. Live Edge/Chrome visual tests and a ROS2/Nav2 launch were not\navailable in this environment. Verify /speed_filter_mask, /speed_filter_info\nand /speed_limit on your robot after integrating the exported files.\n";
+
+  // ===== Speed zones (Nav2 Humble occupancy codes 0..100) =====
+  function speedValue(code, config=speedConfig){
+    return code === 0 ? 0 : config.base + config.multiplier*code;
+  }
+  function speedLabel(code){
+    const value=speedValue(code);
+    return value <= 0 ? 'No limit' : `${Number(value.toFixed(4))}${speedConfig.type===1?'%':' m/s'}`;
+  }
+  function validateSpeedConfig(config){
+    if(!config || ![1,2].includes(config.type) || !Number.isFinite(config.base) ||
+       !Number.isFinite(config.multiplier) || config.multiplier===0)
+      throw new Error('Speed filter needs type 1 (percent) or 2 (m/s), finite base, and nonzero multiplier.');
+  }
+  function codeForSpeed(value){
+    if(!Number.isFinite(value) || value<0) throw new Error('Enter a nonnegative speed; 0 clears the limit.');
+    if(value===0) return 0;
+    const code=Math.round((value-speedConfig.base)/speedConfig.multiplier);
+    const actual=speedValue(code);
+    if(code<1 || code>100 || actual<=0 || (speedConfig.type===1 && actual>100))
+      throw new Error('Speed is outside this layer\'s range. Adjust the absolute range or choose a supported speed.');
+    return code;
+  }
+  function hasSpeedData(){ return speedLoaded || (speedMask && speedMask.some(v=>v!==0)); }
+  function ensureSpeedMask(){
+    if(!pgm) return;
+    if(!speedMask) speedMask=new Uint8Array(pgm.width*pgm.height);
+  }
+  function updateSpeedControls(){
+    const input=document.getElementById('speedValue');
+    input.step=Math.abs(speedConfig.multiplier);
+    input.min=0;
+    input.max=Math.max(speedValue(1),speedValue(100));
+    input.value=Number(speedValue(speedPaintCode).toFixed(6));
+    document.getElementById('speedMode').value=String(speedConfig.type);
+    document.getElementById('speedUnits').textContent=speedConfig.type===1?'%':'m/s';
+    document.getElementById('speedRangeWrap').hidden=speedConfig.type!==2;
+    document.getElementById('speedRange').value=absoluteSpeedRange;
+    document.getElementById('speedStep').textContent=`Step: ${Number(Math.abs(speedConfig.multiplier).toFixed(6))}${speedConfig.type===1?'%':' m/s'} · 0 clears limit`;
+    document.getElementById('speedPaintInfo').textContent='Paint: '+speedLabel(speedPaintCode);
+    document.getElementById('speedName').textContent=speedName;
+    document.getElementById('btnDownloadSpeed').hidden=!hasSpeedData();
+    document.getElementById('speedEditGroup').hidden=tool!=='speed';
+    document.getElementById('speedOptionsFields').hidden=tool!=='speed';
+    document.getElementById('eraseOptionsFields').hidden=tool!=='erase';
+    document.getElementById('keepoutOptionsFields').hidden=tool!=='mask';
+    document.getElementById('eraseOptions').hidden=!['erase','speed','mask'].includes(tool);
+  }
+  function changeSpeedConfig(type,range){
+    if(!Number.isFinite(range) || range<=0){ alert('Absolute range must be greater than 0 m/s.'); updateSpeedControls(); return; }
+    const next={type,base:0,multiplier:type===1?1:range/100};
+    if(hasSpeedData() && !window.confirm(`Apply ${type===1?'percentage limits':'absolute limits with range '+range+' m/s'} to this entire speed layer? Existing zone codes will be reinterpreted with these units and range; this is not a robot-speed calibration. Undo history will be cleared.`)){
+      updateSpeedControls(); return;
+    }
+    speedConfig=next; absoluteSpeedRange=range;
+    if(speedYaml)speedYaml.gyropalm_speed_filter=Object.assign({},next);
+    speedPaintCode=type===1?50:Math.max(1,Math.min(100,Math.round(0.5/next.multiplier)));
+    speedModified=true; speedLabelsDirty=true;
+    undoStack.length=0;redoStack.length=0;
+    updateSpeedControls(); rebuildSpeedLabels();redrawSpeed();
+  }
+  function onSpeedValueChange(){
+    const input=document.getElementById('speedValue');
+    try{
+      if(!input.value.trim()) throw new Error('Enter a speed limit.');
+      speedPaintCode=codeForSpeed(Number(input.value));
+    }catch(e){ alert(e.message);updateSpeedControls();return false; }
+    updateSpeedControls();return true;
+  }
+  function speedColor(code){
+    // Cyan at low codes, amber at high codes; actual values always appear as text.
+    return [Math.round(25+220*code/100),Math.round(195-30*code/100),Math.round(245-195*code/100)];
+  }
+  function rebuildSpeedLabels(){
+    if(!speedLabelsDirty || !pgm || !speedMask) return;
+    speedLabels=[];
+    const {width:w,height:h}=pgm, n=w*h, seen=new Uint8Array(n),queue=new Uint32Array(n);
+    for(let start=0;start<n;start++){
+      const code=speedMask[start];
+      if(code===0 || seen[start]) continue;
+      let head=0,tail=1,sumX=0,sumY=0;queue[0]=start;seen[start]=1;
+      while(head<tail){
+        const idx=queue[head++],x=idx%w,y=Math.floor(idx/w);sumX+=x;sumY+=y;
+        const visit=j=>{if(!seen[j] && speedMask[j]===code){seen[j]=1;queue[tail++]=j;}};
+        if(x>0)visit(idx-1);if(x+1<w)visit(idx+1);if(y>0)visit(idx-w);if(y+1<h)visit(idx+w);
+      }
+      // Anchor inside the component, even for concave zones / hollow rectangles.
+      const cx=sumX/tail,cy=sumY/tail;let best=start,bestD=Infinity;
+      for(let j=0;j<tail;j++){
+        const idx=queue[j],d=(idx%w-cx)**2+(Math.floor(idx/w)-cy)**2;
+        if(d<bestD){best=idx;bestD=d;}
+      }
+      if(speedLabels.length<250) speedLabels.push({x:best%w+.5,y:Math.floor(best/w)+.5,code,count:tail});
+    }
+    speedLabelsDirty=false;
+  }
+  function redrawSpeed(){
+    speedCtx.clearRect(0,0,speedCanvas.width,speedCanvas.height);
+    if(!pgm || !speedMask || !document.getElementById('showSpeed').checked) return;
+    const w=pgm.width,h=pgm.height,img=speedCtx.createImageData(w,h);
+    const colors=Array.from({length:101},(_,i)=>speedColor(i));
+    for(let i=0;i<speedMask.length;i++){
+      const code=speedMask[i];if(!code)continue;
+      const color=colors[code];img.data.set([color[0],color[1],color[2],105],i*4);
+    }
+    const tmp=document.createElement('canvas');tmp.width=w;tmp.height=h;
+    tmp.getContext('2d').putImageData(img,0,0);speedCtx.imageSmoothingEnabled=false;
+    speedCtx.drawImage(tmp,0,0,speedCanvas.width,speedCanvas.height);
+    if(!speedLabelsDirty && document.getElementById('showSpeedLabels').checked){
+      speedCtx.save();speedCtx.font='bold 13px "Segoe UI", sans-serif';speedCtx.textAlign='center';speedCtx.textBaseline='middle';
+      for(const label of speedLabels){
+        const text=speedLabel(label.code),x=label.x*zoom,y=label.y*zoom;
+        const tw=speedCtx.measureText(text).width+10;
+        speedCtx.fillStyle='rgba(8,20,30,.85)';speedCtx.fillRect(x-tw/2,y-10,tw,20);
+        speedCtx.fillStyle='#fff';speedCtx.fillText(text,x,y);
+      }
+      speedCtx.restore();
+    }
+  }
+  function refreshSpeed(){
+    rebuildSpeedLabels();redrawSpeed();updateSpeedControls();
+  }
+  function updateSpeedHover(e){
+    const el=document.getElementById('speedHover');
+    if(!pgm || !speedMask || !document.getElementById('showSpeed').checked){el.hidden=true;return;}
+    const [cx,cy]=clientToCanvas(e.clientX,e.clientY),[x,y]=canvasToMap(cx,cy);
+    if(x<0||y<0||x>=pgm.width||y>=pgm.height){el.hidden=true;return;}
+    el.textContent='Speed: '+speedLabel(speedMask[y*pgm.width+x]);el.hidden=false;
+  }
+  function checkSpeedGeometry(meta,base=yamlObj){
+    if(!meta || !base) return;
+    if(Math.abs(meta.resolution-base.resolution)>1e-9 ||
+       meta.origin.some((n,i)=>Math.abs(n-base.origin[i])>1e-9))
+      throw new Error('Speed-mask resolution/origin differ from the base map. This editor requires aligned masks.');
+  }
+  function speedConfigFromYaml(meta){
+    const config=meta && meta.gyropalm_speed_filter;
+    if(!config) return null;
+    const out={type:Number(config.type),base:Number(config.base),multiplier:Number(config.multiplier)};
+    validateSpeedConfig(out);return out;
+  }
+  function speedCodesFromPGM(parsed,meta,config){
+    const dst=new Uint8Array(parsed.width*parsed.height),mode=meta?meta.mode||'trinary':'raw';
+    const roundEven=n=>Math.abs(n-Math.floor(n)-.5)<1e-10 ? 2*Math.round(n/2) : Math.round(n);
+    for(let i=0;i<dst.length;i++){
+      const shade=parsed.pixels[i]/parsed.maxval;
+      let code;
+      if(mode==='raw') code=Math.round(shade*255);
+      else{
+        const occ=meta.negate?shade:1-shade;
+        if(occ>meta.occupied_thresh)code=100;
+        else if(occ<meta.free_thresh)code=0;
+        else if(mode==='scale')code=roundEven((occ-meta.free_thresh)/(meta.occupied_thresh-meta.free_thresh)*100);
+        else if(mode==='trinary')code=-1;
+        else throw new Error('Unsupported speed-mask map mode.');
+      }
+      if(code<0 || code>100) throw new Error('Speed mask has unknown/out-of-range cells. Nav2 speed masks require codes 0..100.');
+      const value=speedValue(code,config);
+      if(value<0 || (config.type===1 && value>100)) throw new Error('Speed filter conversion produces an invalid speed. Check type/base/multiplier.');
+      dst[i]=value===0?0:code;
+    }
+    return dst;
+  }
+  function resolveMissingSpeedConfig(){
+    const answer=window.prompt('This speed YAML has no saved filter conversion. Enter type,base,multiplier from its CostmapFilterInfo server (type 1 = percent, 2 = m/s). Example: 1,0,1. Cancel to leave it pending.',`${speedConfig.type},${speedConfig.base},${speedConfig.multiplier}`);
+    if(answer===null) return null;
+    const values=answer.split(',').map(Number);
+    if(values.length!==3) throw new Error('Expected type,base,multiplier.');
+    const config={type:values[0],base:values[1],multiplier:values[2]};validateSpeedConfig(config);return config;
+  }
+  function applySpeedSource(source=speedSource,meta=speedYaml,config=speedConfigFromYaml(meta)||speedConfig){
+    if(!source) return false;
+    validateSpeedConfig(config);checkSpeedGeometry(meta);
+    if(!pgm){speedSource=source;speedYaml=meta;speedConfig=config;return false;}
+    const parsed=source.parsed;
+    if(parsed.width!==pgm.width || parsed.height!==pgm.height)throw new Error('Speed-mask dimensions do not match the base map.');
+    const next=speedCodesFromPGM(parsed,meta,config);
+    if(speedModified && !window.confirm('Loading this speed mask replaces the currently edited speed zones. Continue?'))return false;
+    // Commit only after geometry, pixels and conversion have all validated.
+    speedSource=source;speedYaml=meta;speedMask=next;speedConfig=config;speedLoaded=true;speedModified=false;speedName=source.name;
+    if(config.type===2)absoluteSpeedRange=Math.max(speedValue(1),speedValue(100));
+    speedPaintCode=next.find(v=>v>0)||50;
+    speedLabelsDirty=true;undoStack.length=0;redoStack.length=0;refreshSpeed();updateDebug();return true;
+  }
+  function loadSpeedPGM(filename,u8){
+    const parsed=parsePGM(u8),source={name:filename,parsed};
+    applySpeedSource(source);
+    if(!pgm)document.getElementById('speedName').textContent=filename+' (load base map to view)';
+  }
+  function loadSpeedYaml(meta,filename,sourceOverride){
+    validateMapYaml(meta);checkSpeedGeometry(meta);
+    let config=speedConfigFromYaml(meta);
+    if(!config){config=resolveMissingSpeedConfig();if(!config)return;}
+    const nextMeta=Object.assign({},meta,{gyropalm_speed_filter:config});
+    const expected=String(meta.image).split(/[\\/]/).pop();
+    const source=sourceOverride || (speedSource && speedSource.name===expected ? speedSource : null);
+    if(source){ applySpeedSource(source,nextMeta,config); return; }
+    if(speedModified&&!window.confirm('Load this new speed YAML? The current speed zones will be replaced when its PGM is supplied.'))return;
+    speedSource=null;speedMask=null;speedLoaded=false;speedModified=false;speedLabels=[];speedLabelsDirty=true;
+    speedYaml=nextMeta;speedConfig=config;speedName=filename+' (waiting for PGM)';
+    if(config.type===2)absoluteSpeedRange=Math.max(speedValue(1),speedValue(100));
+    speedPaintCode=50;undoStack.length=0;redoStack.length=0;
+    redrawSpeed();updateSpeedControls();
+  }
+  function buildSpeedFiles(base){
+    checkSpeedGeometry(speedYaml);validateSpeedConfig(speedConfig);
+    const speedBase=base+'_speed';
+    const y={image:speedBase+'.pgm',mode:'raw',resolution:yamlObj.resolution,origin:yamlObj.origin.slice(),negate:0,occupied_thresh:.65,free_thresh:.25,
+      gyropalm_speed_filter:Object.assign({},speedConfig)};
+    const parameters={use_sim_time:false,filter_info_topic:'/speed_filter_info',type:speedConfig.type,mask_topic:'/speed_filter_mask',base:speedConfig.base,multiplier:speedConfig.multiplier};
+    // ROS parameters for doubles must remain doubles even for integer values.
+    let configYaml=jsyaml.dump({speed_filter_info_server:{ros__parameters:parameters}});
+    configYaml=configYaml.replace(/^(\s*(?:base|multiplier):\s*)(-?\d+)$/gm,'$1$2.0');
+    const configComment='# Launch nav2_map_server/costmap_filter_info_server with node name speed_filter_info_server and these params.\n# Publish '+speedBase+'.yaml with a separate nav2_map_server/map_server on /speed_filter_mask.\n# Add both servers to lifecycle management; enable nav2_costmap_2d::SpeedFilter using /speed_filter_info.\n# Keep this speed filter separate from keepout filter-info topics. See SPEED_ZONES_README.txt.\n';
+    return [
+      {name:speedBase+'.pgm',data:encodePGM({width:pgm.width,height:pgm.height,maxval:255,pixels:speedMask}),mime:'image/x-portable-graymap'},
+      {name:speedBase+'.yaml',data:new TextEncoder().encode(jsyaml.dump(y)),mime:'text/yaml'},
+      {name:speedBase+'_filter_info.yaml',data:new TextEncoder().encode(configComment+configYaml),mime:'text/yaml'}
+    ];
   }
 
   // ===== PGM parsing/encoding =====
@@ -1149,7 +1460,8 @@
 
   function encodePGM(pgm){
     const {width:w, height:h, maxval, pixels} = pgm;
-    const header = `P5\n${w} ${h}\n${maxval}\n`;
+    const comment=pgm.comment ? '# '+String(pgm.comment).replace(/[\r\n]/g,' ')+'\n' : '';
+    const header = `P5\n${comment}${w} ${h}\n${maxval}\n`;
     const enc = new TextEncoder();
     const hbytes = enc.encode(header);
     const bytesPer = (maxval>255)?2:1;
@@ -1218,7 +1530,8 @@
     let suggested = lastMapExportName || currentMap;
     const detail = kind === 'keepout'
       ? 'Keepout files will use this map name plus _keepout.'
-      : kind === 'full' ? 'The ZIP contains this map and its _keepout PGM/YAML pairs.'
+      : kind === 'speed' ? 'Speed files use this name plus _speed, with a filter-info config.'
+      : kind === 'full' ? 'The ZIP contains the map, keepout and any speed zones with their filter-info config.'
       : 'The PGM and YAML will use this name.';
     while(true){
       const entered = window.prompt(
@@ -1262,18 +1575,26 @@
       alert('Load YAML and PGM first.'); return;
     }
     validateMapYaml(yamlObj);
+    if(kind==='speed'&&!hasSpeedData()){alert('Load or draw speed zones first.');return;}
     const base = promptExportName(kind);
     if(base === null) return;
-    const keepoutImage = {magic:'P5', width:pgm.width, height:pgm.height, maxval:255, pixels:mask};
     // Build everything before triggering downloads, so serialization failures
     // cannot leave only one half of a newly exported pair.
     const files = kind === 'map' ? buildMapPair(pgm,base)
-      : kind === 'keepout' ? buildMapPair(keepoutImage,base+'_keepout')
-      : [...buildMapPair(pgm,base), ...buildMapPair(keepoutImage,base+'_keepout')];
-    if(kind === 'full') dlBytes(encodeZip(files),base+'.zip','application/zip');
+      : kind === 'keepout' ? buildKeepoutPair(base+'_keepout')
+      : kind === 'speed' ? buildSpeedFiles(base)
+      : [...buildMapPair(pgm,base), ...buildKeepoutPair(base+'_keepout'), ...(hasSpeedData()?buildSpeedFiles(base):[])];
+    if(kind === 'full'){
+      files.push({name:'KEEPOUT_README.txt',data:new TextEncoder().encode(keepoutDeploymentNotes)});
+      if(hasSpeedData())files.push({name:'SPEED_ZONES_README.txt',data:new TextEncoder().encode(speedDeploymentNotes)});
+      dlBytes(encodeZip(files),base+'.zip','application/zip');
+    }
     else files.forEach(file => dlBytes(file.data,file.name,file.mime));
     lastMapExportName = base;
   }
+  $('#btnDownloadSpeed').on('click', ()=>{
+    try{exportMapFiles('speed');}catch(e){alert('Speed export error: '+e.message);}
+  });
   $('#btnDownloadFull').on('click', ()=>{
     try{ exportMapFiles('full'); }
     catch(e){ alert('Full map export error: ' + e.message); }
@@ -1287,6 +1608,7 @@
     catch(e){ alert('Keepout export error: ' + e.message); }
   });
 
+  updateSpeedControls();
 })();
 </script>
 </body>
