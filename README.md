@@ -8,6 +8,16 @@ The map editor can be thought of as a specialized paint tool, allowing users to 
 
 ![Screenshot](img/screenshot-main.png)
 
+## What's New
+
+- [x] File tab: Load YAML, Load PGM, both ZIP exports, loaded filenames.
+- [x] Organized UI into modern ribbon sections for Home, Edit, View, and Help
+- [x] General bug fixes (i.e. pan)
+- [x] Fixed YAML map renaming issue
+- [x] Keyboard hotkeys for changing tabs
+- [x] Rotate view accepts any finite degree angle, clockwise positive (e.g. -12.5)
+- [x] Export map set as a ZIP file
+
 ## Features
 - [x] Completely Browser-based Self-Hosted Solution (superior privacy)
 - [x] Responsive Map Editing for Touchscreen Devices and Computers
@@ -24,7 +34,7 @@ The map editor can be thought of as a specialized paint tool, allowing users to 
 - [x] Live-Preview Overlay for Brushing or Drawing Lines/Rectangles
 - [x] Multi-level Undo and Redo Capabilities (with `CTRL+Z` and `CTRL+Y` hotkeys)
 - [x] Option to Draw Filled Rectangles
-- [x] (Hold `Spacebar` + Drag Mouse) to Pan the Map
+- [x] (Hold `Shift` + Drag Mouse) to Pan the Map
 - [x] (Hold `Shift` + Scroll) to Zoom to Cursor
 - [x] Drag to Take Measurements Dynamically from a Map
 - [x] Download Separate Map and Keepout Mask (yaml and PGM files)

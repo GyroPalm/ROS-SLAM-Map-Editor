@@ -77,97 +77,83 @@
 	  user-select: none; /* Non-prefixed version, 
 							supported by all other modern browsers */
 	}
+
+    /* Office-style ribbon, retaining the editor's dark theme. */
+    body{font-family:"Segoe UI",Arial,sans-serif}
+    .ribbon{padding:0;background:#25272b;box-shadow:0 2px 8px #0005}
+    .ribbon-title{padding:8px 20px;background:#125b80;font-size:14px;font-weight:600;letter-spacing:.2px}
+    .ribbon-title span{font-weight:400;margin-left:12px;color:#d9edf8}
+    .ribbon-tabs{display:flex;padding:0 12px;background:#1d1f22;border-bottom:1px solid #484b50}
+    .ribbon-tab{background:transparent;border:0;border-bottom:3px solid transparent;color:#ddd;padding:9px 23px;font-size:14px;cursor:pointer}
+    .ribbon-tab:hover{background:#35383d}
+    .ribbon-tab[aria-selected="true"]{background:#303338;color:white;border-bottom-color:#54bce8}
+    .ribbon-tab:focus-visible,.ribbon button:focus-visible{outline:2px solid #8bd5ff;outline-offset:-2px}
+    .ribbon-panel{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:stretch;min-height:78px;padding:8px 12px;gap:0;overflow-x:auto}
+    .ribbon-panel[hidden]{display:none!important}
+    .ribbon-group{display:flex;flex-direction:column;justify-content:space-between;border-right:1px solid #484b50;padding:2px 18px;flex-shrink:0;gap:8px}
+    .ribbon-group:last-child{border-right:0}
+    .ribbon-controls{display:flex;align-items:center;gap:10px;flex:1}
+    .ribbon-caption{text-align:center;font-size:11px;color:#aaa;letter-spacing:.3px}
+    .ribbon-stack{display:flex;flex-direction:row;gap:6px;align-items:flex-start}
+    .ribbon-file-list{display:flex;flex-direction:column;gap:5px;max-width:420px}
+    .ribbon-file-list span{margin-left:0!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .ribbon .btn{border-radius:3px;white-space:nowrap}
+    .ribbon .btn-group .btn{padding:10px 13px}
+    .ribbon .tool-btn.active,.ribbon .shape-btn.active{background:#125b80;color:#fff;outline:0;box-shadow:inset 0 0 0 1px #54bce8}
+    #brushSize{width:160px}
+    #viewport{overscroll-behavior:contain;user-select:none;touch-action:none}
+    #viewport:focus{outline:1px solid #54bce8}
+    #viewport.panning,#viewport.panning *{cursor:grab!important}
+    #viewport.panning.dragging,#viewport.panning.dragging *{cursor:grabbing!important}
+    #viewport.panning #brushCursor{display:none!important}
+    #canvasWrap{display:block;position:absolute;left:0;top:0;width:max-content;line-height:0;transform-origin:0 0;will-change:transform}
+    #viewport{overflow:hidden;contain:layout paint}
+    #mapCanvas,#maskCanvas{border:0;display:block}
+    .ribbon-tabs{overflow-x:auto;flex-wrap:nowrap}
+    .help-text{display:block;line-height:1.7;font-size:13px}
+    #btnPanView[aria-pressed="true"]{background:#125b80;border-color:#54bce8}
+    .overlay-label{pointer-events:none;line-height:normal}
+    .col-lg-9{min-width:0}
+    @media(max-width:600px){.ribbon-group{padding:2px 10px}.ribbon-tab{padding:9px 16px}}
   </style>
 </head>
 <body>
-<div class="toolbar p-2">
-  <div class="container-fluid">
-    <div class="form-row align-items-center">
-      <div class="col-auto pb-2">
-        <input type="file" id="yamlInput" accept=".yaml,.yml" class="d-none">
-        <button class="btn btn-sm btn-outline-info" id="btnLoadYaml"><i class="fa fa-file-text-o"></i> Load YAML</button>
-        <span id="yamlName" class="small-note ml-2">No YAML</span>
-      </div>
-      <div class="col-auto pb-2">
-        <input type="file" id="pgmInput" accept=".pgm" class="d-none">
-        <button class="btn btn-sm btn-outline-info" id="btnLoadPgm"><i class="fa fa-picture-o"></i> Load PGM</button>
-        <span id="pgmName" class="small-note ml-2">No PGM</span>
-		<span id="maskName" class="small-note ml-2">No Keepout</span>
-      </div>
-	  
-      <!-- Zoom / Undo-Redo -->
-      <div class="col-auto pb-2">
-        <div class="btn-group btn-group-sm" role="group" aria-label="Zoom">
-          <button class="btn btn-outline-light" id="zoomOut" title="Zoom Out (−)"><i class="fa fa-search-minus"></i></button>
-          <button class="btn btn-outline-light" id="zoomIn" title="Zoom In (+)"><i class="fa fa-search-plus"></i></button>
-          <button class="btn btn-outline-light" id="zoomReset" title="Reset Zoom"><i class="fa fa-compress"></i></button>
-        </div>
-        <div class="btn-group btn-group-sm ml-2" role="group">
-          <button class="btn btn-outline-warning" id="btnUndo" title="Undo (Ctrl+Z)"><i class="fa fa-undo"></i></button>
-          <button class="btn btn-outline-warning" id="btnRedo" title="Redo (Ctrl+Y / Shift+Z)"><i class="fa fa-repeat"></i></button>
-        </div>
-      </div>
-
-      <!-- Target (which layer / action) -->
-      <div class="col-auto pb-2">
-        <div class="btn-group btn-group-sm" role="group" aria-label="Tools">
+<div class="toolbar ribbon noselect"><div class="ribbon-title">GyroPalm <span>SLAM Map Editor</span></div><div class="ribbon-tabs" role="tablist" aria-label="Editor ribbon"><button type="button" class="ribbon-tab" id="tab-file" aria-keyshortcuts="Shift+F" title="File (Shift + F)" role="tab" aria-selected="false" aria-controls="panel-file" tabindex="-1">File</button><button type="button" class="ribbon-tab" id="tab-home" aria-keyshortcuts="Shift+H" title="Home (Shift + H)" role="tab" aria-selected="true" aria-controls="panel-home" tabindex="0">Home</button><button type="button" class="ribbon-tab" id="tab-edit" aria-keyshortcuts="Shift+E" title="Edit (Shift + E)" role="tab" aria-selected="false" aria-controls="panel-edit" tabindex="-1">Edit</button><button type="button" class="ribbon-tab" id="tab-view" aria-keyshortcuts="Shift+V" title="View (Shift + V)" role="tab" aria-selected="false" aria-controls="panel-view" tabindex="-1">View</button><button type="button" class="ribbon-tab" id="tab-help" role="tab" aria-selected="false" aria-controls="panel-help" tabindex="-1">Help</button></div><div class="ribbon-panel" id="panel-file" role="tabpanel" aria-labelledby="tab-file" hidden><div class="ribbon-group"><div class="ribbon-controls"><div class="ribbon-stack"><input type="file" id="yamlInput" accept=".yaml,.yml" class="d-none"><input type="file" id="pgmInput" accept=".pgm" class="d-none"><button class="btn btn-sm btn-outline-info" id="btnLoadYaml"><i class="fa fa-file-text-o"></i> Load YAML</button><button class="btn btn-sm btn-outline-info" id="btnLoadPgm"><i class="fa fa-picture-o"></i> Load PGM</button></div></div><div class="ribbon-caption">Open map</div></div><div class="ribbon-group"><div class="ribbon-controls"><div class="ribbon-stack"><button class="btn btn-sm btn-success" id="btnDownloadMap"><i class="fa fa-download"></i> Download Map ZIP</button><button class="btn btn-sm btn-warning" id="btnDownloadMask"><i class="fa fa-download"></i> Download Keepout ZIP</button></div></div><div class="ribbon-caption">Export map</div></div><div class="ribbon-group"><div class="ribbon-controls"><div class="ribbon-file-list"><span id="yamlName" class="small-note ml-2">No YAML</span><span id="pgmName" class="small-note ml-2">No PGM</span><span id="maskName" class="small-note ml-2">No Keepout</span></div></div><div class="ribbon-caption">Loaded files</div></div></div><div class="ribbon-panel" id="panel-home" role="tabpanel" aria-labelledby="tab-home"><div class="ribbon-group"><div class="ribbon-controls"><div class="btn-group btn-group-sm" role="group" aria-label="Tools">
           <button class="btn btn-outline-light tool-btn" data-tool="paint" title="Paint Walls (occupied)"><i class="fa fa-paint-brush"></i> Wall</button>
           <button class="btn btn-outline-light tool-btn" data-tool="erase" title="Erase Map + Keepout"><i class="fa fa-eraser"></i> Erase</button>
 		  <button class="btn btn-outline-light tool-btn" data-tool="unscan" title="Mark as unknown (un-scanned)"><i class="fa fa-minus-square-o"></i> Un-Scan</button>
           <button class="btn btn-outline-light tool-btn" data-tool="mask" title="Draw Keepout Mask"><i class="fa fa-ban"></i> Keep-Out</button>
-        </div>
-      </div>
-
-      <!-- Shape Group -->
-      <div class="col-auto pb-2">
-        <div class="btn-group btn-group-sm" role="group" aria-label="Shape">
-          <button class="btn btn-outline-light shape-btn" data-shape="freehand" title="Freehand"><i class="fa fa-pencil"></i></button>
-          <button class="btn btn-outline-light shape-btn" data-shape="line" title="Line"><i class="fa fa-minus"></i></button>
-          <button class="btn btn-outline-light shape-btn" data-shape="rect" title="Rectangle"><i class="fa fa-square-o"></i></button>
-		  <button class="btn btn-outline-light shape-btn" data-shape="measure" title="Measure Distance"><i class="fa fa-arrows-h"></i></button>
-        </div>
-      </div>
-
-      <!-- Brush -->
-      <div class="col-auto pb-2">
-        <label class="mb-0 mr-2"><i class="fa fa-dot-circle-o"></i> Brush</label>
-        <input type="range" id="brushSize" min="1" max="60" value="8">
-        <span id="brushLabel" class="small-note">8 px</span>
-      </div>
-
-      <!-- Display toggles -->
-      <div class="col-auto pb-2">
-        <div class="form-check form-check-inline">
-          <input class="form-check-input" type="checkbox" id="showMask" checked>
-          <label class="form-check-label" for="showMask">Show Mask</label>
-        </div>
-        <div class="form-check form-check-inline">
-          <input class="form-check-input" type="checkbox" id="invertDisplay">
-          <label class="form-check-label" for="invertDisplay">Invert</label>
-        </div>
-        <div class="form-check form-check-inline">
-          <input class="form-check-input" type="checkbox" id="autoLevels" checked>
-          <label class="form-check-label" for="autoLevels">Auto-levels</label>
-        </div>
-		<div class="form-check form-check-inline">
+        </div></div><div class="ribbon-caption">Layers</div></div><div class="ribbon-group"><div class="ribbon-controls"><div class="btn-group btn-group-sm ml-2" role="group">
+          <button class="btn btn-outline-warning" id="btnUndo" title="Undo (Ctrl+Z)"><i class="fa fa-undo"></i> Undo</button>
+          <button class="btn btn-outline-warning" id="btnRedo" title="Redo (Ctrl+Y / Shift+Z)"><i class="fa fa-repeat"></i> Redo</button>
+        </div></div><div class="ribbon-caption">History</div></div></div><div class="ribbon-panel" id="panel-edit" role="tabpanel" aria-labelledby="tab-edit" hidden><div class="ribbon-group"><div class="ribbon-controls"><div class="btn-group btn-group-sm" role="group" aria-label="Shape">
+          <button class="btn btn-outline-light shape-btn" data-shape="freehand" title="Freehand"><i class="fa fa-pencil"></i> Freehand</button>
+          <button class="btn btn-outline-light shape-btn" data-shape="line" title="Line"><i class="fa fa-minus"></i> Line</button>
+          <button class="btn btn-outline-light shape-btn" data-shape="rect" title="Rectangle"><i class="fa fa-square-o"></i> Rectangle</button>
+		  <button class="btn btn-outline-light shape-btn" data-shape="measure" title="Measure Distance"><i class="fa fa-arrows-h"></i> Measure distance</button>
+        </div></div><div class="ribbon-caption">Shape</div></div><div class="ribbon-group"><div class="ribbon-controls"><div class="form-check form-check-inline">
 		  <input class="form-check-input" type="checkbox" id="filledRect">
 		  <label class="form-check-label" for="filledRect">Filled</label>
-		</div>
-      </div>
-
-	  <!-- Download Files -->
-      <div class="col-auto pb-2">
-        <button class="btn btn-sm btn-success" id="btnDownloadMap"><i class="fa fa-download"></i> Download Map</button>
-        <button class="btn btn-sm btn-warning" id="btnDownloadMask"><i class="fa fa-download"></i> Download Keepout Mask</button>
-      </div>
-
-      <div class="col small-note ml-auto text-right pb-2">
-        Tip: Choose a target (Paint/Erase/Keep-Out), then a shape (Freehand/Line/Rect). Spacebar+Drag to pan. Shift+Scroll to zoom.
-      </div>
-    </div>
-  </div>
-</div>
-
+		</div></div><div class="ribbon-caption">Options</div></div><div class="ribbon-group"><div class="ribbon-controls"><label for="brushSize" class="sr-only">Brush size</label><input type="range" id="brushSize" min="1" max="60" value="8"><span id="brushLabel" class="small-note">8 px</span></div><div class="ribbon-caption">Brush size</div></div></div><div class="ribbon-panel" id="panel-view" role="tabpanel" aria-labelledby="tab-view" hidden><div class="ribbon-group"><div class="ribbon-controls"><div class="ribbon-stack"><div class="form-check form-check-inline">
+          <input class="form-check-input" type="checkbox" id="showMask" checked>
+          <label class="form-check-label" for="showMask">Show Mask</label>
+        </div><div class="form-check form-check-inline">
+          <input class="form-check-input" type="checkbox" id="invertDisplay">
+          <label class="form-check-label" for="invertDisplay">Invert</label>
+        </div><div class="form-check form-check-inline">
+          <input class="form-check-input" type="checkbox" id="autoLevels" checked>
+          <label class="form-check-label" for="autoLevels">Auto-levels</label>
+        </div></div></div><div class="ribbon-caption">Display</div></div><div class="ribbon-group"><div class="ribbon-controls"><div class="btn-group btn-group-sm" role="group" aria-label="Zoom">
+          <button class="btn btn-outline-light" id="zoomOut" title="Zoom Out (−)"><i class="fa fa-search-minus"></i> Out</button>
+          <button class="btn btn-outline-light" id="zoomIn" title="Zoom In (+)"><i class="fa fa-search-plus"></i> In</button>
+          <button class="btn btn-outline-light" id="zoomReset" title="Reset Zoom"><i class="fa fa-compress"></i> 100%</button>
+        </div></div><div class="ribbon-caption">Zoom</div></div><div class="ribbon-group"><div class="ribbon-controls">
+<button type="button" class="btn btn-sm btn-outline-light" id="btnRotateView" title="Set a view-only angle in degrees; exports keep their original coordinates">Rotate view (0°)</button>
+<button type="button" class="btn btn-sm btn-outline-light" id="btnPanView" aria-pressed="false" title="Toggle drag-to-pan without holding Shift or Space">Pan</button>
+<button type="button" class="btn btn-sm btn-outline-light" id="btnResetView" title="Reset pan, rotation and zoom">Reset view</button>
+</div><div class="ribbon-caption">Orientation &amp; navigation</div></div></div><div class="ribbon-panel" id="panel-help" role="tabpanel" aria-labelledby="tab-help" hidden>
+<div class="ribbon-group"><div class="ribbon-controls help-text">Shift + Drag to Pan. Shift + Scroll to zoom. Extract ZIP before opening YAML in Nav2<br>Shift + H for Home, Shift + E for Edit, Shift + V for View. Rotate for viewing only</div><div class="ribbon-caption">Editing tips</div></div>
+<div class="ribbon-group"><div class="ribbon-controls">Copyright © <span id="copyrightYear">2026</span> GyroPalm, LLC.</div><div class="ribbon-caption">GyroPalm SLAM Map Editor</div></div></div></div>
 <div class="container-fluid mt-3">
   <div class="row">
     <div class="col-lg-3 mb-3">
@@ -179,6 +165,7 @@
       <div class="card bg-dark">
         <div class="card-body p-2">
           <div class="small-note">YAML preview</div>
+          <div id="mapFileWarning" class="small text-warning mb-2" role="status"></div>
           <pre id="yamlPreview" class="mb-0" style="max-height:240px; overflow:auto;"></pre>
         </div>
       </div>
@@ -204,7 +191,7 @@
     </div>
 
     <div class="col-lg-9">
-      <div id="viewport">
+      <div id="viewport" tabindex="0" aria-label="Map canvas. Hold Shift or Space and drag to pan.">
         <div id="canvasWrap">
           <div class="overlay-label">Map</div>
           <canvas id="mapCanvas"></canvas>
@@ -236,6 +223,7 @@
   let brush = 8;
   let zoom = 1, ZMIN=0.25, ZMAX=8, ZSTEP=1.25;
   
+  let lastMapExportName = null, lastMaskExportName = null;
   let maskName = 'No Keepout';      // track which mask file is loaded
   
   // filename helpers
@@ -244,8 +232,9 @@
   const isKeepoutName = name => /_keepout\.(pgm|ya?ml)$/i.test(name) || /keepout/i.test(name);
 
   // Panning
-  let isSpace = false, panning = false;
-  let panStartX=0, panStartY=0, panStartScrollL=0, panStartScrollT=0;
+  let isSpace = false, isShift = false, panning = false, panMode = false;
+  let viewX=0, viewY=0, viewAngle=0;
+  let panStartX=0, panStartY=0, panStartViewX=0, panStartViewY=0;
 
   // Undo/Redo stacks
   const undoStack = [];  // each: [{layer, idx, prev, next}, ...]
@@ -280,6 +269,30 @@
   const canvasWrap = document.getElementById('canvasWrap');
 
   // ===== UI Handlers =====
+  // Ribbon tabs use native buttons and work independently of Bootstrap tabs.
+  const ribbonTabs = Array.from(document.querySelectorAll('.ribbon-tab'));
+  function selectRibbonTab(tab){
+    ribbonTabs.forEach(t => {
+      const active = t === tab;
+      t.setAttribute('aria-selected', String(active));
+      t.tabIndex = active ? 0 : -1;
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !active;
+    });
+    sizeViewport();
+  }
+  ribbonTabs.forEach((tab,index) => {
+    tab.addEventListener('click', () => selectRibbonTab(tab));
+    tab.addEventListener('keydown', e => {
+      let next;
+      if(e.key === 'ArrowRight') next = (index+1)%ribbonTabs.length;
+      else if(e.key === 'ArrowLeft') next = (index+ribbonTabs.length-1)%ribbonTabs.length;
+      else if(e.key === 'Home') next = 0;
+      else if(e.key === 'End') next = ribbonTabs.length-1;
+      else return;
+      e.preventDefault(); selectRibbonTab(ribbonTabs[next]); ribbonTabs[next].focus();
+    });
+  });
+  document.getElementById('copyrightYear').textContent = new Date().getFullYear();
   $('.tool-btn').on('click', function(){
     $('.tool-btn').removeClass('active'); $(this).addClass('active');
     tool = $(this).data('tool');
@@ -314,32 +327,84 @@
   $('#zoomIn').on('click', ()=> setZoom(Math.min(ZMAX, zoom*ZSTEP)));
   $('#zoomOut').on('click', ()=> setZoom(Math.max(ZMIN, zoom/ZSTEP)));
   $('#zoomReset').on('click', ()=> setZoom(1));
+  $('#btnRotateView').on('click', () => {
+    if(!pgm){ alert('Load a PGM first.'); return; }
+    const answer = window.prompt('View rotation in degrees (clockwise positive). Use any angle, such as 90 or -12.5. Exports keep their original coordinates.', String(viewAngle));
+    if(answer === null) return;
+    if(!answer.trim() || !Number.isFinite(Number(answer))){ alert('Enter a finite angle in degrees.'); return; }
+    setViewAngle(Number(answer));
+  });
+  $('#btnPanView').on('click', () => {
+    panMode = !panMode; stopPanning(); updatePanCursor();
+  });
+  $('#btnResetView').on('click', () => {
+    isShift = false; releaseSpace(); panMode=false; updatePanCursor();
+    if(!pgm) return;
+    setZoom(1); viewAngle=0; viewX=0; viewY=0; applyViewTransform();
+  });
 
   // Undo/Redo
   $('#btnUndo').on('click', undo);
   $('#btnRedo').on('click', redo);
 
-  // Keyboard shortcuts
-  window.addEventListener('keydown', (e)=>{
-    if(e.target && /input|textarea|select/i.test(e.target.tagName)) return;
-
+  // Keyboard shortcuts: Shift and Space pan; Shift+Scroll zooms.
+  function isTextEntry(target){
+    return target && (target.isContentEditable || /^(TEXTAREA|SELECT)$/.test(target.tagName) ||
+      (target.tagName === 'INPUT' && !['range','checkbox','radio','button','submit','reset','file','color'].includes(target.type)));
+  }
+  window.addEventListener('keydown', e => {
+    if(isTextEntry(e.target)) return;
+    // Home owns H; Help remains accessible through its tab button.
+    if(e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey){
+      const tabName = {f:'file', h:'home', e:'edit', v:'view'}[e.key.toLowerCase()];
+      if(tabName){
+        e.preventDefault();
+        const tab = document.getElementById('tab-' + tabName);
+        selectRibbonTab(tab);
+        tab.focus({preventScroll:true});
+        return;
+      }
+    }
+    if(e.key === 'Shift'){
+      if(pgm){ isShift = true; updatePanCursor(); }
+      return;
+    }
     if(e.code === 'Space'){
-      if(!isSpace){ e.preventDefault(); isSpace = true; viewport.classList.add('panning'); }
+      if(!pgm || e.ctrlKey || e.metaKey || e.altKey) return;
+      e.preventDefault(); // Also suppress repeated Space scrolling / button activation.
+      isSpace = true;
+      updatePanCursor();
     } else if(e.key === '+' || e.key === '='){ setZoom(Math.min(ZMAX, zoom*ZSTEP)); }
     else if(e.key === '-' || e.key === '_'){ setZoom(Math.max(ZMIN, zoom/ZSTEP)); }
     else if(e.key === '0'){ setZoom(1); }
-    else if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z'){ e.preventDefault(); undo(); }
-    else if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y'){ e.preventDefault(); redo(); }
+    else if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z'){
+      e.preventDefault(); if(e.shiftKey) redo(); else undo();
+    } else if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y'){ e.preventDefault(); redo(); }
     else if(e.shiftKey && e.key.toLowerCase() === 'z'){ e.preventDefault(); redo(); }
   });
-  window.addEventListener('keyup', (e)=>{
-    if(e.code === 'Space'){ isSpace = false; viewport.classList.remove('panning'); viewport.classList.remove('dragging'); }
+  function updatePanCursor(){
+    viewport.classList.toggle('panning', isSpace || isShift || panMode);
+    document.getElementById('btnPanView').setAttribute('aria-pressed', String(panMode));
+  }
+  function stopPanning(){
+    panning = false; viewport.classList.remove('dragging');
+  }
+  function releaseSpace(){
+    isSpace = false; stopPanning(); updatePanCursor();
+  }
+  window.addEventListener('keyup', e => {
+    if(e.key === 'Shift'){ isShift = false; stopPanning(); updatePanCursor(); }
+    if(e.code === 'Space'){ if(!isTextEntry(e.target)) e.preventDefault(); releaseSpace(); }
+  });
+  window.addEventListener('blur', () => { isShift = false; releaseSpace(); endDrawing(); });
+  document.addEventListener('visibilitychange', () => {
+    if(document.hidden){ isShift = false; releaseSpace(); endDrawing(); }
   });
 
   // Resize viewport height precisely relative to toolbar
   function sizeViewport(){
-    const toolbarH = document.querySelector('.toolbar').offsetHeight;
-    viewport.style.height = Math.max(200, window.innerHeight - toolbarH - 16) + 'px';
+    const top = viewport.getBoundingClientRect().top;
+    viewport.style.height = Math.max(200, window.innerHeight - top - 16) + 'px';
   }
   window.addEventListener('resize', sizeViewport);
   sizeViewport();
@@ -355,44 +420,54 @@
     handleFiles(e.dataTransfer.files);
   });
 
-  // ===== Canvas sizing & zoom =====
-  function setZoom(z){
-    if(!pgm) return;
-    zoom = z;
-    const w = Math.round(pgm.width * zoom);
-    const h = Math.round(pgm.height * zoom);
-    [mapCanvas, maskCanvas, previewCanvas].forEach(cv => { cv.width = w; cv.height = h; });
-    redrawMap(); redrawMask(); clearPreview();
-    updateBrushCursorSize();
+  // View transforms affect map, mask, previews and brush together, never image data.
+  function viewRotation(){
+    const a=viewAngle*Math.PI/180;
+    return {c:Math.cos(a), s:Math.sin(a)};
   }
-  
-  // ===== Canvas focused zoom helper using Shift+Scroll =====
-  function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
-  
-    // Zoom keeping the cursor position anchored
-  function zoomAtClient(clientX, clientY, factor){
+  function applyViewTransform(){
+    canvasWrap.style.transform = `translate(${viewX}px, ${viewY}px) rotate(${viewAngle}deg)`;
+    document.getElementById('btnRotateView').textContent = `Rotate view (${Math.round(viewAngle*100)/100}°)`;
+  }
+  function viewportPoint(clientX,clientY){
+    const r=viewport.getBoundingClientRect();
+    return [clientX-r.left-viewport.clientLeft, clientY-r.top-viewport.clientTop];
+  }
+  function clientToCanvas(clientX,clientY){
+    const [x,y]=viewportPoint(clientX,clientY), {c,s}=viewRotation();
+    const dx=x-viewX, dy=y-viewY;
+    return [c*dx+s*dy, -s*dx+c*dy];
+  }
+  function anchorView(cx,cy,vx,vy){
+    const {c,s}=viewRotation();
+    viewX=vx-(c*cx-s*cy); viewY=vy-(s*cx+c*cy);
+    applyViewTransform();
+  }
+  function viewportCenterClient(){
+    const r=viewport.getBoundingClientRect();
+    return [r.left+viewport.clientLeft+viewport.clientWidth/2, r.top+viewport.clientTop+viewport.clientHeight/2];
+  }
+  function setViewAngle(angle){
+    const [x,y]=viewportCenterClient(), [cx,cy]=clientToCanvas(x,y), [vx,vy]=viewportPoint(x,y);
+    viewAngle=((angle%360)+540)%360-180;
+    anchorView(cx,cy,vx,vy);
+    clearPreview();
+  }
+  function setZoom(z, clientX, clientY){
     if(!pgm) return;
-  
-    const vpRect = viewport.getBoundingClientRect();
-    const vx = clientX - vpRect.left;   // cursor relative to viewport
-    const vy = clientY - vpRect.top;
-  
-    // Canvas coords under cursor BEFORE zoom
-    const cxBefore = viewport.scrollLeft + vx;
-    const cyBefore = viewport.scrollTop  + vy;
-    const mx = cxBefore / zoom; // map pixels under cursor
-    const my = cyBefore / zoom;
-  
-    // Apply zoom
-    const newZoom = clamp(zoom * factor, ZMIN, ZMAX);
-    if(newZoom === zoom) return;
-    setZoom(newZoom);
-  
-    // AFTER zoom, compute needed scroll so that (mx,my) stays under cursor
-    const cxAfter = mx * zoom;
-    const cyAfter = my * zoom;
-    viewport.scrollLeft = Math.round(cxAfter - vx);
-    viewport.scrollTop  = Math.round(cyAfter - vy);
+    if(clientX === undefined) [clientX,clientY]=viewportCenterClient();
+    const [cx,cy]=clientToCanvas(clientX,clientY), [vx,vy]=viewportPoint(clientX,clientY);
+    const ratio=z/zoom;
+    zoom=z;
+    const w=Math.round(pgm.width*zoom), h=Math.round(pgm.height*zoom);
+    [mapCanvas,maskCanvas,previewCanvas].forEach(cv=>{cv.width=w;cv.height=h;});
+    anchorView(cx*ratio,cy*ratio,vx,vy);
+    redrawMap(); redrawMask(); clearPreview(); updateBrushCursorSize();
+  }
+  function clamp(v,lo,hi){ return Math.max(lo,Math.min(hi,v)); }
+  function zoomAtClient(clientX,clientY,factor){
+    if(!pgm) return;
+    setZoom(clamp(zoom*factor,ZMIN,ZMAX),clientX,clientY);
   }
 
   viewport.addEventListener('wheel', (e)=>{
@@ -415,10 +490,8 @@
     brushCursor.style.height = d + 'px';
   }
   function moveBrushCursor(evt){
-    const rect = mapCanvas.getBoundingClientRect();
     const client = evt.touches ? evt.touches[0] : evt;
-    const x = client.clientX - rect.left;
-    const y = client.clientY - rect.top;
+    const [x,y] = clientToCanvas(client.clientX,client.clientY);
     const d = Math.max(1, Math.round(brush * zoom));
     brushCursor.style.left = Math.round(x - d/2) + 'px';
     brushCursor.style.top  = Math.round(y - d/2) + 'px';
@@ -426,39 +499,45 @@
   mapCanvas.addEventListener('mouseenter', ()=> { brushCursor.style.display = 'block'; updateBrushCursorSize(); });
   mapCanvas.addEventListener('mouseleave', ()=> { brushCursor.style.display = 'none'; });
 
-  // ===== Panning with spacebar + drag =====
-  mapCanvas.addEventListener('mousedown', e=>{
-    if(isSpace){
-      panning = true;
-      viewport.classList.add('dragging');
-      panStartX = e.clientX; panStartY = e.clientY;
-      panStartScrollL = viewport.scrollLeft; panStartScrollT = viewport.scrollTop;
-    } else {
-      startDrawing(e.offsetX, e.offsetY);
-    }
+  // Desktop pan uses window-level mouse movement and free translation, not
+  // scrollLeft/scrollTop (which clamp to zero when no scroll range is available).
+  viewport.addEventListener('mousedown', e => {
+    if(!pgm || e.button !== 0 || !(isSpace || e.shiftKey || panMode)) return;
+    e.preventDefault(); e.stopPropagation();
+    endDrawing(); viewport.focus({preventScroll:true});
+    isShift = e.shiftKey === true; updatePanCursor();
+    panning=true;
+    panStartX=e.clientX; panStartY=e.clientY;
+    panStartViewX=viewX; panStartViewY=viewY;
+    viewport.classList.add('dragging');
+  }, true);
+  window.addEventListener('mousemove', e => {
+    if(!panning) return;
+    e.preventDefault();
+    viewX=panStartViewX+e.clientX-panStartX;
+    viewY=panStartViewY+e.clientY-panStartY;
+    applyViewTransform();
+  });
+  mapCanvas.addEventListener('mousedown', e => {
+    if(isSpace || e.shiftKey || panMode || panning || e.button !== 0) return;
+    e.preventDefault(); viewport.focus({preventScroll:true});
+    startDrawing(...clientToCanvas(e.clientX,e.clientY));
   });
   mapCanvas.addEventListener('mousemove', e => {
+    if(isSpace || e.shiftKey || panMode || panning) return;
     moveBrushCursor(e);
-    if(panning){
-      viewport.scrollLeft = panStartScrollL - (e.clientX - panStartX);
-      viewport.scrollTop  = panStartScrollT  - (e.clientY - panStartY);
-    } else if(drawing && shape==='freehand'){
-      paintAt(e.offsetX, e.offsetY);
-    } else if(previewing && (shape==='line' || shape==='rect' || shape==='measure')) {
-      drawPreview(sx, sy, e.offsetX, e.offsetY);
-    }
+    const [x,y]=clientToCanvas(e.clientX,e.clientY);
+    if(drawing && shape==='freehand') paintAt(x,y);
+    else if(previewing && (shape==='line' || shape==='rect' || shape==='measure')) drawPreview(sx,sy,x,y);
   });
-  window.addEventListener('mouseup', e=>{
-    if(panning){ panning=false; viewport.classList.remove('dragging'); }
-    endDrawing(e);
-  });
+  window.addEventListener('mouseup', e => { stopPanning(); endDrawing(e); });
 
-  // Touch (no spacebar on mobile — pan via viewport scroll as usual)
+  // Touch drawing uses the same inverse view transform as mouse drawing.
   mapCanvas.addEventListener('touchstart', e=>{
     if(!pgm) return;
     e.preventDefault();
-    const t = e.touches[0], rect = mapCanvas.getBoundingClientRect();
-    const x = t.clientX - rect.left, y = t.clientY - rect.top;
+    const t = e.touches[0];
+    const [x,y] = clientToCanvas(t.clientX,t.clientY);
     moveBrushCursor(e);
     startDrawing(x, y);
   }, {passive:false});
@@ -466,8 +545,7 @@
     if(!pgm) return;
     e.preventDefault();
     const t = e.touches[0];
-    const rect = mapCanvas.getBoundingClientRect();
-    const x = t.clientX - rect.left, y = t.clientY - rect.top;
+    const [x,y] = clientToCanvas(t.clientX,t.clientY);
     moveBrushCursor(e);
     if(drawing && shape==='freehand'){ paintAt(x, y); }
     else if(previewing && (shape==='line' || shape==='rect' || shape==='measure')){
@@ -501,10 +579,9 @@
     } else if(previewing){
       previewing = false;
 	  // commit line/rect
-      const rect = mapCanvas.getBoundingClientRect();
       let ex, ey;
       if(e && typeof e.clientX === 'number'){
-        ex = e.clientX - rect.left; ey = e.clientY - rect.top;
+        [ex,ey] = clientToCanvas(e.clientX,e.clientY);
       } else { 
 		// if touchend or mouseup without coordinates, keep last previewed pos
 		ex = lastPreviewX ?? sx; ey = lastPreviewY ?? sy;
@@ -861,7 +938,11 @@
     try{
       const parsed = parsePGM(u8);
       pgmName = filename;
+      lastMapExportName = null;
+      lastMaskExportName = null;
       pgm = parsed;
+      isShift = false; releaseSpace(); panMode=false; updatePanCursor();
+      viewX=0; viewY=0; viewAngle=0; applyViewTransform();
       $pgmName.text(filename);
   
       // If mask not allocated or wrong size, reset/resize it to match the map
@@ -905,6 +986,7 @@
   
       mask = dst;
       maskName = filename;
+      lastMaskExportName = null;
       $('#maskName').text(filename);
   
       // If base map not loaded yet, we still remember the mask;
@@ -932,6 +1014,10 @@
   }
   
   function updateDebug(){
+    const expected = yamlObj && typeof yamlObj.image === 'string' ? yamlObj.image : '';
+    const expectedBase = expected.split(/[\\/]/).pop();
+    $('#mapFileWarning').text(pgm && yamlObj && expectedBase !== pgmName
+      ? `YAML references "${expected}" but the loaded image is "${pgmName}". Export ZIP will use a matching filename pair.` : '');
     if(!pgm){
       $('#dbgInfo').text('—');
       return;
@@ -996,59 +1082,58 @@
 
   // ===== PGM parsing/encoding =====
   function parsePGM(uint8){
-    const textHead = new TextDecoder().decode(uint8.slice(0, 1024));
-    const magic = textHead.slice(0,2);
+    // Track the byte offset while reading tokens. Never scan binary pixels for whitespace.
+    let pos = 0;
+    const ws = c => c === 32 || (c >= 9 && c <= 13);
+    function token(){
+      while(pos < uint8.length){
+        if(ws(uint8[pos])){ pos++; continue; }
+        if(uint8[pos] === 35){
+          while(pos < uint8.length && uint8[pos] !== 10 && uint8[pos] !== 13) pos++;
+          continue;
+        }
+        break;
+      }
+      const start = pos;
+      while(pos < uint8.length && !ws(uint8[pos]) && uint8[pos] !== 35) pos++;
+      if(pos === start || pos - start > 64) throw new Error('Missing or invalid PGM token');
+      return new TextDecoder('ascii').decode(uint8.subarray(start, pos));
+    }
+    function integer(label){
+      const t = token();
+      if(!/^\d+$/.test(t)) throw new Error('Invalid PGM ' + label);
+      const n = Number(t);
+      if(!Number.isSafeInteger(n)) throw new Error('PGM ' + label + ' is too large');
+      return n;
+    }
+    const magic = token();
     if(magic !== 'P5' && magic !== 'P2') throw new Error('Unsupported PGM magic');
-
-    function* tokens(bytes){
-      let s = '';
-      for(let i=0;i<bytes.length;i++){
-        const c = String.fromCharCode(bytes[i]);
-        if(c==='#'){ while(i<bytes.length && String.fromCharCode(bytes[i])!=='\n') i++; continue; }
-        if(/\s/.test(c)){ if(s.length){ yield s; s=''; } } else s+=c;
-        if(s.length>256) throw new Error('Header token too long');
-      } if(s.length) yield s;
+    const w = integer('width'), h = integer('height'), maxv = integer('maxval');
+    const total = w*h;
+    if(w < 1 || h < 1 || maxv < 1 || maxv > 65535 ||
+       !Number.isSafeInteger(total) || total > 100000000){
+      throw new Error('Invalid or excessive PGM dimensions/maxval');
     }
-    const it = tokens(uint8);
-    const mg = it.next().value; if(mg !== magic) throw new Error('Malformed header');
-    const w = parseInt(it.next().value,10);
-    const h = parseInt(it.next().value,10);
-    const maxv = parseInt(it.next().value,10);
-    if(!(w>0 && h>0 && maxv>0)) throw new Error('Invalid pgm dims/maxval');
-
-    if(magic === 'P2'){
-      const restTxt = new TextDecoder().decode(uint8);
-      const headerRe = new RegExp(`^\\s*${magic}[\\s\\S]*?\\b${maxv}\\b`);
-      const headerMatch = restTxt.match(headerRe);
-      const start = headerMatch ? headerMatch[0].length : 0;
-      const nums = restTxt.slice(start).match(/\d+/g) || [];
-      if(nums.length < w*h) throw new Error('P2 data too short');
-      const pixels = new Uint16Array(w*h);
-      for(let i=0;i<w*h;i++) pixels[i] = Math.min(maxv, parseInt(nums[i],10));
-      return {magic, width:w, height:h, maxval:maxv, pixels};
-    }else{
-      // After maxval, first non-ws is raster
-      let nums=0, i=2, inTok=false;
-      while(i < uint8.length && nums < 3){
-        const c = uint8[i];
-        if(c === 35){ while(i<uint8.length && uint8[i]!==10) i++; }
-        else if(c > 32){ if(!inTok){ inTok=true; nums++; } }
-        else{ if(inTok){ inTok=false; } }
-        i++;
-      }
-      while(i < uint8.length && uint8[i] <= 32) i++;
-      const dataStart = i;
-
-      const pixels = (maxv>255) ? new Uint16Array(w*h) : new Uint8Array(w*h);
-      const bytesPer = (maxv>255)?2:1;
-      const needed = w*h*bytesPer;
-      if(dataStart + needed > uint8.length) throw new Error('P5 data too short');
-      if(bytesPer===1){ pixels.set(uint8.slice(dataStart, dataStart+needed)); }
-      else{
-        let p=0; for(let k=0;k<needed;k+=2){ pixels[p++] = (uint8[dataStart+k]<<8) | uint8[dataStart+k+1]; }
-      }
-      return {magic, width:w, height:h, maxval:maxv, pixels};
+    const bytesPer = maxv > 255 ? 2 : 1;
+    if(magic === 'P5'){
+      if(!ws(uint8[pos])) throw new Error('Missing PGM raster separator');
+      const needed = total * bytesPer;
+      // Accept CRLF headers only when the exact remaining length disambiguates
+      // CRLF from a CR separator followed by a real 0x0A pixel.
+      if(uint8[pos] === 13 && uint8[pos+1] === 10 && uint8.length-pos-2 === needed) pos += 2;
+      else pos++;
+      if(uint8.length-pos !== needed) throw new Error('P5 raster size does not match dimensions (truncated or extra data)');
+    }else if(total > uint8.length){
+      throw new Error('P2 data too short');
     }
+    const pixels = maxv > 255 ? new Uint16Array(total) : new Uint8Array(total);
+    for(let i=0;i<total;i++){
+      const v = magic === 'P2' ? integer('pixel')
+        : bytesPer === 1 ? uint8[pos++] : (uint8[pos++] << 8) | uint8[pos++];
+      if(v > maxv) throw new Error('PGM pixel exceeds maxval');
+      pixels[i] = v;
+    }
+    return {magic, width:w, height:h, maxval:maxv, pixels};
   }
 
   function encodePGM(pgm){
@@ -1069,44 +1154,112 @@
 
   // ===== Downloads =====
   function dlBytes(bytes, filename, mime='application/octet-stream'){
-    const blob = new Blob([bytes], {type:mime});
-    const url = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(new Blob([bytes], {type:mime}));
     const a = document.createElement('a');
-    a.href = url; a.download = filename; a.click();
-    URL.revokeObjectURL(url);
-  }
-  function dlText(txt, filename, mime='text/yaml'){
-    const blob = new Blob([txt], {type:mime});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = filename; a.click();
-    URL.revokeObjectURL(url);
-  }
-  function buildUpdatedYaml(imageName){
-    if(!yamlObj) return '';
-    const y = Object.assign({}, yamlObj, { image: imageName });
-    return jsyaml.dump(y);
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    // Give the browser time to consume the download URL.
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
   }
 
+  // Small, dependency-free ZIP writer (STORE method, UTF-8 names, CRC-32).
+  // One download avoids blocked second downloads and independent filename suffixes.
+  function encodeZip(files){
+    const enc = new TextEncoder();
+    const table = new Uint32Array(256);
+    for(let n=0;n<256;n++){
+      let c=n;
+      for(let k=0;k<8;k++) c = (c & 1) ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
+      table[n] = c >>> 0;
+    }
+    const records = files.map(f => {
+      const name = enc.encode(f.name), data = f.data;
+      let crc = 0xFFFFFFFF;
+      for(const byte of data) crc = table[(crc ^ byte) & 255] ^ (crc >>> 8);
+      return {name, data, crc:(crc ^ 0xFFFFFFFF) >>> 0};
+    });
+    const size = records.reduce((n,r)=>n+30+r.name.length+r.data.length+46+r.name.length,22);
+    const out = new Uint8Array(size), view = new DataView(out.buffer);
+    let p=0;
+    function u16(v){ view.setUint16(p,v,true); p+=2; }
+    function u32(v){ view.setUint32(p,v,true); p+=4; }
+    function raw(v){ out.set(v,p); p+=v.length; }
+    for(const r of records){
+      r.offset=p;
+      u32(0x04034B50); u16(20); u16(0x800); u16(0); u16(0); u16(33);
+      u32(r.crc); u32(r.data.length); u32(r.data.length); u16(r.name.length); u16(0);
+      raw(r.name); raw(r.data);
+    }
+    const centralStart=p;
+    for(const r of records){
+      u32(0x02014B50); u16(20); u16(20); u16(0x800); u16(0); u16(0); u16(33);
+      u32(r.crc); u32(r.data.length); u32(r.data.length); u16(r.name.length);
+      u16(0); u16(0); u16(0); u16(0); u32(0); u32(r.offset); raw(r.name);
+    }
+    const centralSize=p-centralStart;
+    u32(0x06054B50); u16(0); u16(0); u16(records.length); u16(records.length);
+    u32(centralSize); u32(centralStart); u16(0);
+    return out;
+  }
+
+  function promptExportName(isKeepout){
+    const currentMap = pgmName.replace(/\.pgm$/i,'');
+    const currentMask = maskName !== 'No Keepout' ? maskName.replace(/\.pgm$/i,'')
+      : (lastMapExportName || currentMap).replace(/_keepout$/i,'') + '_keepout';
+    let suggested = isKeepout ? (lastMaskExportName || currentMask) : (lastMapExportName || currentMap);
+    while(true){
+      const entered = window.prompt(
+        `Name for ${isKeepout ? 'keepout mask' : 'map'} (without extension). The ZIP, PGM and YAML will share this name:`, suggested);
+      if(entered === null) return null;
+      const base = entered.trim();
+      if(!base || /[<>:"/\\|?*\x00-\x1f]/.test(base) || /[. ]$/.test(base) ||
+         /^(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\.|$)/i.test(base)){
+        alert('Enter a valid filename without a folder path, trailing dot, or reserved filename characters.');
+        suggested = base;
+        continue;
+      }
+      if(/\.(pgm|ya?ml|zip)$/i.test(base)){
+        alert('Enter the name without .pgm, .yaml or .zip. These extensions are added automatically.');
+        suggested = base.replace(/\.(pgm|ya?ml|zip)$/i,'');
+        continue;
+      }
+      return base;
+    }
+  }
+  function validateMapYaml(y){
+    if(!y || typeof y !== 'object' || Array.isArray(y)) throw new Error('YAML must be a map object');
+    if(!Number.isFinite(y.resolution) || y.resolution <= 0) throw new Error('YAML resolution must be positive');
+    if(!Array.isArray(y.origin) || y.origin.length !== 3 || !y.origin.every(Number.isFinite))
+      throw new Error('YAML origin must contain three numbers');
+    if(y.negate !== 0 && y.negate !== 1) throw new Error('YAML negate must be 0 or 1');
+    if(!Number.isFinite(y.free_thresh) || !Number.isFinite(y.occupied_thresh) ||
+       y.free_thresh < 0 || y.occupied_thresh > 1 || y.free_thresh >= y.occupied_thresh)
+      throw new Error('YAML thresholds must satisfy 0 <= free_thresh < occupied_thresh <= 1');
+    if(y.mode != null && !['trinary','scale','raw'].includes(y.mode)) throw new Error('Unsupported YAML mode');
+  }
+  function downloadMapPair(image, isKeepout){
+    validateMapYaml(yamlObj);
+    const base = promptExportName(isKeepout);
+    if(base === null) return;
+    const y = Object.assign({}, yamlObj, {image:base+'.pgm'});
+    const yaml = jsyaml.dump(y);
+    const zip = encodeZip([
+      {name:base+'.pgm', data:encodePGM(image)},
+      {name:base+'.yaml', data:new TextEncoder().encode(yaml)}
+    ]);
+    dlBytes(zip, base+'.zip', 'application/zip');
+    if(isKeepout) lastMaskExportName = base;
+    else lastMapExportName = base;
+  }
   $('#btnDownloadMap').on('click', ()=>{
     if(!pgm || !yamlObj){ alert('Load YAML and PGM first.'); return; }
-    const pgmBytes = encodePGM(pgm);
-    const outPgm = pgmName.replace(/\.pgm$/i,'_edited.pgm');
-    const outYaml = (yamlName||'map.yaml').replace(/\.ya?ml$/i,'_edited.yaml');
-    dlBytes(pgmBytes, outPgm, 'image/x-portable-graymap');
-    dlText(buildUpdatedYaml(outPgm), outYaml, 'text/yaml');
+    try{ downloadMapPair(pgm, false); }
+    catch(e){ alert('Map export error: ' + e.message); }
   });
-
   $('#btnDownloadMask').on('click', ()=>{
     if(!pgm || !yamlObj || !mask){ alert('Load YAML and PGM first.'); return; }
-    const m = { magic:'P5', width: pgm.width, height: pgm.height, maxval: 255, pixels: mask };
-    const maskBytes = encodePGM(m);
-    const base = (pgmName||'map.pgm').replace(/\.pgm$/i,'');
-    const outMaskPgm = base + '_keepout.pgm';
-    const outMaskYaml = base + '_keepout.yaml';
-    const y = Object.assign({}, yamlObj, { image: outMaskPgm });
-    dlBytes(maskBytes, outMaskPgm, 'image/x-portable-graymap');
-    dlText(jsyaml.dump(y), outMaskYaml, 'text/yaml');
+    try{ downloadMapPair({magic:'P5', width:pgm.width, height:pgm.height, maxval:255, pixels:mask}, true); }
+    catch(e){ alert('Keepout export error: ' + e.message); }
   });
 
 })();
