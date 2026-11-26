@@ -112,10 +112,10 @@
     .ribbon-tabs{overflow-x:auto;flex-wrap:nowrap}
     .help-text{display:block;line-height:1.7;font-size:13px}
     #btnPanView[aria-pressed="true"]{background:#125b80;border-color:#54bce8}
-    .overlay-label{pointer-events:none;line-height:normal}
+    .overlay-label{pointer-events:none;line-height:normal;transform-origin:0 0}
     .col-lg-9{min-width:0}
     @media(max-width:600px){.ribbon-group{padding:2px 10px}.ribbon-tab{padding:9px 16px}}
-    #speedCanvas{position:absolute;left:0;top:0;z-index:2;pointer-events:none;image-rendering:pixelated;background:transparent}
+    #speedCanvas{position:absolute;left:0;top:0;z-index:2;pointer-events:none;image-rendering:pixelated;image-rendering:crisp-edges;background:transparent}
     #speedHover{position:absolute;bottom:10px;left:10px;z-index:6;background:#102b3dee;color:white;border:1px solid #49b6dd;padding:5px 10px;border-radius:4px;font-size:13px;pointer-events:none}
     [hidden]{display:none!important}
     .speed-number{width:95px!important}
@@ -243,7 +243,10 @@
   let previewing = false;
   let brush = 8;
   let zoom = 1, ZMIN=0.25, ZMAX=8, ZSTEP=1.25;
-  
+  // A canvas beyond the browser's size limits silently stays blank, so canvases
+  // stop growing at these thresholds and CSS magnifies the rest of the zoom.
+  const MAX_CANVAS_PIXELS = 64e6, MAX_CANVAS_SIDE = 16384;
+
   let lastMapExportName = null;
   let maskName = 'No Keepout';      // track which mask file is loaded
   
@@ -289,6 +292,7 @@
   const maskCtx = maskCanvas.getContext('2d');
   const prevCtx = previewCanvas.getContext('2d');
   const brushCursor = document.getElementById('brushCursor');
+  const mapLabel = document.querySelector('.overlay-label');
   const viewport = document.getElementById('viewport');
   const canvasWrap = document.getElementById('canvasWrap');
 
@@ -469,8 +473,20 @@
     const a=viewAngle*Math.PI/180;
     return {c:Math.cos(a), s:Math.sin(a)};
   }
+  // Canvas pixels per map pixel: follows zoom up to the canvas size limits.
+  // A map already beyond them keeps one canvas pixel per map pixel.
+  function canvasZoom(){
+    if(!pgm) return zoom;
+    const {width:w, height:h} = pgm;
+    const limit = Math.min(Math.sqrt(MAX_CANVAS_PIXELS/(w*h)), MAX_CANVAS_SIDE/Math.max(w,h));
+    return Math.min(zoom, Math.max(1, limit));
+  }
+  function cssZoom(){ return zoom/canvasZoom(); }
   function applyViewTransform(){
-    canvasWrap.style.transform = `translate(${viewX}px, ${viewY}px) rotate(${viewAngle}deg)`;
+    const k=cssZoom();
+    canvasWrap.style.transform = `translate(${viewX}px, ${viewY}px) rotate(${viewAngle}deg) scale(${k})`;
+    // The label and the brush outline keep their on-screen size
+    mapLabel.style.transform = brushCursor.style.transform = `scale(${1/k})`;
     document.getElementById('btnRotateView').textContent = `Rotate view (${Math.round(viewAngle*100)/100}°)`;
   }
   function viewportPoint(clientX,clientY){
@@ -478,13 +494,13 @@
     return [clientX-r.left-viewport.clientLeft, clientY-r.top-viewport.clientTop];
   }
   function clientToCanvas(clientX,clientY){
-    const [x,y]=viewportPoint(clientX,clientY), {c,s}=viewRotation();
-    const dx=x-viewX, dy=y-viewY;
+    const [x,y]=viewportPoint(clientX,clientY), {c,s}=viewRotation(), k=cssZoom();
+    const dx=(x-viewX)/k, dy=(y-viewY)/k;
     return [c*dx+s*dy, -s*dx+c*dy];
   }
   function anchorView(cx,cy,vx,vy){
-    const {c,s}=viewRotation();
-    viewX=vx-(c*cx-s*cy); viewY=vy-(s*cx+c*cy);
+    const {c,s}=viewRotation(), k=cssZoom();
+    viewX=vx-k*(c*cx-s*cy); viewY=vy-k*(s*cx+c*cy);
     applyViewTransform();
   }
   function viewportCenterClient(){
@@ -501,12 +517,16 @@
     if(!pgm) return;
     if(clientX === undefined) [clientX,clientY]=viewportCenterClient();
     const [cx,cy]=clientToCanvas(clientX,clientY), [vx,vy]=viewportPoint(clientX,clientY);
-    const ratio=z/zoom;
+    const before=canvasZoom();
     zoom=z;
-    const w=Math.round(pgm.width*zoom), h=Math.round(pgm.height*zoom);
-    [mapCanvas,maskCanvas,speedCanvas,previewCanvas].forEach(cv=>{cv.width=w;cv.height=h;});
+    const cz=canvasZoom(), ratio=cz/before;
+    const w=Math.round(pgm.width*cz), h=Math.round(pgm.height*cz);
+    // Past the canvas size limits only the CSS magnification changes
+    const resized = cz!==before;
+    if(resized) [mapCanvas,maskCanvas,speedCanvas,previewCanvas].forEach(cv=>{cv.width=w;cv.height=h;});
     anchorView(cx*ratio,cy*ratio,vx,vy);
-    redrawMap(); redrawMask(); redrawSpeed(); clearPreview(); updateBrushCursorSize();
+    if(resized){ redrawMap(); redrawMask(); redrawSpeed(); }
+    clearPreview(); updateBrushCursorSize();
   }
   function clamp(v,lo,hi){ return Math.max(lo,Math.min(hi,v)); }
   function zoomAtClient(clientX,clientY,factor){
@@ -525,7 +545,7 @@
 
 
   // ===== Coordinate transforms (canvas pixel -> map pixel) =====
-  function canvasToMap(cx, cy){ return [Math.floor(cx/zoom), Math.floor(cy/zoom)]; }
+  function canvasToMap(cx, cy){ const cz=canvasZoom(); return [Math.floor(cx/cz), Math.floor(cy/cz)]; }
 
   // ===== Brush cursor =====
   function updateBrushCursorSize(){
@@ -537,8 +557,10 @@
     const client = evt.touches ? evt.touches[0] : evt;
     const [x,y] = clientToCanvas(client.clientX,client.clientY);
     const d = Math.max(1, Math.round(brush * zoom));
-    brushCursor.style.left = Math.round(x - d/2) + 'px';
-    brushCursor.style.top  = Math.round(y - d/2) + 'px';
+    // Whole pixels, unless CSS zoom would magnify the rounding
+    const snap = cssZoom()===1 ? Math.round : v=>v;
+    brushCursor.style.left = snap(x - d/2) + 'px';
+    brushCursor.style.top  = snap(y - d/2) + 'px';
   }
   mapCanvas.addEventListener('mouseenter', ()=> { brushCursor.style.display = 'block'; updateBrushCursorSize(); });
   mapCanvas.addEventListener('mouseleave', ()=> { brushCursor.style.display = 'none'; });
@@ -863,7 +885,7 @@
   // helper for label
   function drawLabel(ctx, x, y, text){
     ctx.save();
-    ctx.font = Math.max(12, Math.round(12 * zoom)) + 'px Arial';
+    ctx.font = Math.max(12, Math.round(12 * canvasZoom())) + 'px Arial';
     ctx.textBaseline = 'bottom';
     ctx.lineWidth = 3;
     ctx.strokeStyle = 'rgba(0,0,0,0.8)';
@@ -878,7 +900,7 @@
     lastPreviewX=cx2; lastPreviewY=cy2;
   
     prevCtx.save();
-    prevCtx.lineWidth = Math.max(1, Math.round(brush * zoom));
+    prevCtx.lineWidth = Math.max(1, Math.round(brush * canvasZoom()));
     prevCtx.lineCap = 'round';
   
     if(shape==='line'){
@@ -909,7 +931,7 @@
       prevCtx.strokeRect(x, y, w, h);
     } else if(shape==='measure'){
       // measuring: thin line + label (independent of brush)
-      const lw = Math.max(1, Math.round(2 * zoom));
+      const lw = Math.max(1, Math.round(2 * canvasZoom()));
       prevCtx.lineWidth = lw;
       prevCtx.strokeStyle = 'rgba(0,150,255,0.9)';
       prevCtx.beginPath(); prevCtx.moveTo(cx1, cy1); prevCtx.lineTo(cx2, cy2); prevCtx.stroke();
@@ -1081,7 +1103,7 @@
     const pixels=decodeKeepoutPGM(source.parsed,decoding);
     keepoutSource=source;keepoutYaml=meta;mask=pixels;maskName=source.name;
     undoStack.length=0;redoStack.length=0;$('#maskName').text(maskName);
-    if(pgm){maskCanvas.width=Math.round(pgm.width*zoom);maskCanvas.height=Math.round(pgm.height*zoom);redrawMask();}
+    if(pgm){maskCanvas.width=Math.round(pgm.width*canvasZoom());maskCanvas.height=Math.round(pgm.height*canvasZoom());redrawMask();}
     updateDebug();
   }
   function keepoutSourceFromBytes(name,u8){
@@ -1118,7 +1140,7 @@
 
   function setupCanvasFromPGM(){
     if(!pgm) return;
-    [mapCanvas, maskCanvas, speedCanvas, previewCanvas].forEach(cv => { cv.width = Math.round(pgm.width*zoom); cv.height = Math.round(pgm.height*zoom); });
+    [mapCanvas, maskCanvas, speedCanvas, previewCanvas].forEach(cv => { cv.width = Math.round(pgm.width*canvasZoom()); cv.height = Math.round(pgm.height*canvasZoom()); });
     redrawMap(); redrawMask(); redrawSpeed(); clearPreview(); updateBrushCursorSize();
 
 	updateDebug();
@@ -1303,7 +1325,7 @@
     if(!speedLabelsDirty && document.getElementById('showSpeedLabels').checked){
       speedCtx.save();speedCtx.font='bold 13px "Segoe UI", sans-serif';speedCtx.textAlign='center';speedCtx.textBaseline='middle';
       for(const label of speedLabels){
-        const text=speedLabel(label.code),x=label.x*zoom,y=label.y*zoom;
+        const text=speedLabel(label.code),x=label.x*canvasZoom(),y=label.y*canvasZoom();
         const tw=speedCtx.measureText(text).width+10;
         speedCtx.fillStyle='rgba(8,20,30,.85)';speedCtx.fillRect(x-tw/2,y-10,tw,20);
         speedCtx.fillStyle='#fff';speedCtx.fillText(text,x,y);
