@@ -782,32 +782,31 @@
     redrawMap(); redrawMask();redrawSpeed();
   }
 
+  // View rotation only (no pan): canvas coords <-> axes parallel to the screen
+  function canvasToView(cx, cy){ const {c,s}=viewRotation(); return [c*cx-s*cy, s*cx+c*cy]; }
+  function viewToCanvas(vx, vy){ const {c,s}=viewRotation(); return [c*vx+s*vy, -s*vx+c*vy]; }
+
+  // Corners (canvas coords) of the rectangle between two opposite corners whose
+  // sides follow the screen axes, so it stays upright in a rotated view.
+  function viewAlignedRect(cx1, cy1, cx2, cy2){
+    const [vx1,vy1]=canvasToView(cx1, cy1), [vx2,vy2]=canvasToView(cx2, cy2);
+    return [[cx1,cy1], viewToCanvas(vx2, vy1), [cx2,cy2], viewToCanvas(vx1, vy2)];
+  }
+
   function drawThickRect(cx1, cy1, cx2, cy2){
-    // Normalize corners
-    const x1 = Math.min(cx1, cx2), y1 = Math.min(cy1, cy2);
-    const x2 = Math.max(cx1, cx2), y2 = Math.max(cy1, cy2);
-    // Four edges
-    drawThickLine(x1, y1, x2, y1); // top
-    drawThickLine(x2, y1, x2, y2); // right
-    drawThickLine(x2, y2, x1, y2); // bottom
-    drawThickLine(x1, y2, x1, y1); // left
+    const p = viewAlignedRect(cx1, cy1, cx2, cy2);
+    p.forEach(([x,y],i)=>{ const [nx,ny]=p[(i+1)%4]; drawThickLine(x, y, nx, ny); });
   }
   
   function drawFilledRect(cx1, cy1, cx2, cy2){
-    // normalized canvas rectangle
-    const x1 = Math.min(cx1, cx2), y1 = Math.min(cy1, cy2);
-    const x2 = Math.max(cx1, cx2), y2 = Math.max(cy1, cy2);
-  
     // Outline first (thick edges) — duplicates are OK; touchedIndices prevents double-logging
-    drawThickRect(x1, y1, x2, y2);
+    drawThickRect(cx1, cy1, cx2, cy2);
   
-    // Interior fill (map coords)
-    const [mx1,my1] = canvasToMap(x1, y1);
-    const [mx2,my2] = canvasToMap(x2, y2);
-    const xMin = Math.max(0, Math.min(mx1, mx2));
-    const yMin = Math.max(0, Math.min(my1, my2));
-    const xMax = Math.min(pgm.width-1,  Math.max(mx1, mx2));
-    const yMax = Math.min(pgm.height-1, Math.max(my1, my2));
+    // Interior fill: scanline over the same corners in map coords
+    const q = viewAlignedRect(cx1, cy1, cx2, cy2).map(([x,y])=>canvasToMap(x, y));
+    const ys = q.map(p=>p[1]);
+    const yMin = Math.max(0, Math.min(...ys));
+    const yMax = Math.min(pgm.height-1, Math.max(...ys));
   
     const w = pgm.width, maxval = pgm.maxval;
 	const unknown = getUnknownVal();
@@ -819,6 +818,14 @@
     const speedVal = tool==='speed' ? speedPaintCode : (tool==='erase' && speedMask && eraseEnabled('speed') ? 0 : null);
   
     for(let y = yMin; y <= yMax; y++){
+      let xl = Infinity, xr = -Infinity;
+      for(let i = 0; i < 4; i++){
+        const [ax,ay] = q[i], [bx,by] = q[(i+1)%4];
+        if(y < Math.min(ay,by) || y > Math.max(ay,by)) continue;
+        if(ay === by){ xl = Math.min(xl, ax, bx); xr = Math.max(xr, ax, bx); }
+        else { const x = ax + (y-ay)*(bx-ax)/(by-ay); xl = Math.min(xl, x); xr = Math.max(xr, x); }
+      }
+      const xMin = Math.max(0, Math.ceil(xl)), xMax = Math.min(w-1, Math.floor(xr));
       const rowBase = y * w;
       for(let x = xMin; x <= xMax; x++){
         const idx = rowBase + x;
@@ -885,8 +892,12 @@
 							(tool==='erase')  ? 'rgba(255,255,255,0.85)' :
 							(tool==='unscan') ? 'rgba(205,205,205,0.9)' :
 												'rgba(0,0,0,0.85)';
-      const x = Math.min(cx1,cx2), y = Math.min(cy1,cy2);
-      const w = Math.abs(cx2-cx1), h = Math.abs(cy2-cy1);
+      // Draw in screen-aligned axes to match the committed rectangle
+      const {c,s}=viewRotation();
+      const [vx1,vy1]=canvasToView(cx1, cy1), [vx2,vy2]=canvasToView(cx2, cy2);
+      prevCtx.transform(c, -s, s, c, 0, 0);
+      const x = Math.min(vx1,vx2), y = Math.min(vy1,vy2);
+      const w = Math.abs(vx2-vx1), h = Math.abs(vy2-vy1);
       if(filledRect){
         // show a translucent fill preview
         prevCtx.fillStyle = (tool==='speed') ? 'rgba(35,190,245,0.3)' : (tool==='mask') ? 'rgba(255,0,0,0.25)' :
